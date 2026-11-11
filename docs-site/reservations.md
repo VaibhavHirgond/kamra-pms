@@ -1,0 +1,474 @@
+# Reservations - bookings, tape chart and cancellations
+
+This page covers taking a booking, finding and changing it, taking a
+deposit, and cancelling it. Front Desk and Hotel Admin users can book;
+the tape chart, calendar and reservations list are in the **Front Desk**
+app. Checking guests in and out is in [Front desk](/front-desk).
+
+![The New booking window: guest, phone, room type, dates, party and meal plan on the left, and the live quote with the cancellation terms on the right](/img/reservations/booking-dialog.png)
+
+## Before you start
+
+1. **Rooms, room types and rates.** **Admin → Rooms** and **Room Types**,
+   and your rates and seasons under **Revenue** ([Revenue](/revenue)). The
+   quote uses them.
+2. **Your stay policies.** **Settings → Stay policies**: minimum stay,
+   **Free cancellation until** (days before arrival), **Late cancellation
+   fee**, **No-show charge** and **Deposit expected at booking**. The
+   booking window quotes them and cancelling applies them.
+3. **Add-ons, companies and travel agents**, if you sell them. Add-ons
+   show as chips in the booking window; companies and travel agents come
+   from **Revenue → Companies** and **Travel Agents**.
+
+## Make a booking
+
+1. Click **New booking** in the top bar. It is on every screen.
+2. Type the **Guest name**. Guests who have stayed before appear as you
+   type; pick one to attach the stay to their profile ("Returning guest ·
+   4 stays"). A blacklisted guest shows a red badge.
+3. Add the **Phone**. The country code is filled in; type the local number.
+4. Choose the **Room type**, the **Check-in** date and the number of
+   **Nights**, then **Adults** and **Children**. Pick a **Meal plan** and a
+   **Rate plan**, and type a **Voucher** code if the guest has one.
+5. Check the **Quote** on the right. It updates as you type: room, tax,
+   meals, add-ons and the total, with the cancellation and no-show terms
+   underneath. The cancellation line is worked out from today, the same
+   way cancelling would charge it. It reads "Free cancellation until" a
+   date and what is charged after that; "Non-refundable from now" with the
+   fee, once the free window has closed; or "Free cancellation." It never
+   shows a date that has passed.
+6. Click **Confirm booking**.
+
+![Making a booking: type the guest's name and phone, pick Deluxe, set the date and three nights, confirm, and the booking is made with room 201](/img/reservations/booking.gif)
+
+You get the booking reference and the room Kamra assigned. If no room
+could be assigned, the booking is still made; assign one later from the
+booking (see [Change a booking](#change-a-booking)). The stay shows under
+**Arrivals** on **Today** on its check-in date.
+
+For a stay of a few hours, switch **Overnight** to **Day use** and set the
+time slot. The guest checks in and out the same day.
+
+## Add company, add-ons and arrival details
+
+Open **Company, add-ons & arrival details** in the booking window for:
+
+- **Company (bill corporate)** and **Travel agent**. A company makes it a
+  corporate booking; the company's billing rules decide what it pays.
+- **Add-ons**: click a chip to add it (Airport Transfer, a spa ritual…).
+  Add-ons are added to the quote with their tax and posted to the folio.
+- **Booked on someone's behalf**: the booker's name, phone and relation,
+  and **Send links & updates to** the booker, the guest or both.
+- **Special requests**, which go to the front desk as an instruction, and
+  ticks for **Airport pickup**, **Valet parking**, **Early check-in** and
+  **Late check-out**.
+- How and when the guest arrives, **Extra beds**, **Purpose of visit** and
+  **Guest category**.
+
+![The booking window with Company, add-ons and arrival details open: company and travel agent, add-on chips with Airport Transfer selected, the booker option, special requests and arrival ticks](/img/reservations/booking-more.png)
+
+If the party is bigger than the room type sleeps, the window says so and
+offers **Split into 2 rooms**. Where the room type allows extra beds, you
+can instead keep everyone in one room at a price you agree, with a note of
+who agreed it.
+
+## Book several rooms for one party
+
+1. In **New booking**, fill in the first room as usual.
+2. Click **Add another room**. Each extra room has its own room type,
+   adults and meal plan.
+3. The quote lists every room and shows **Total · all rooms**.
+4. Click **Confirm booking**.
+
+![A booking for three Standard rooms: rooms 2 and 3 added under the first, and the quote showing the total for all rooms](/img/reservations/multi-room.png)
+
+Kamra books every room under one group, so it can be billed together. If
+some rooms can't be booked, it tells you how many it booked and why the
+rest failed. Vouchers, add-ons and booker details are added to each stay
+afterwards. To hold a block of rooms for a group whose names come later,
+use [Groups & blocks](#hold-rooms-for-a-group) instead.
+
+## Put a guest on the waitlist
+
+When the dates are full, you can still take the guest's details:
+
+1. Fill in **New booking** as usual.
+2. Click **Waitlist** instead of **Confirm booking**.
+
+The stay is saved with the status Waitlist and no room. When a room frees
+up, open the booking and click **Promote to a room**: Kamra gives it the
+first free room of the type and confirms it. A waitlisted stay nobody
+promotes is removed by the night audit two days after its departure date.
+
+## Find a booking
+
+- **Front Desk → Reservations** lists every booking. Search by reference,
+  guest or room, filter by **Status** and by check-in dates, and use
+  **Export** for a spreadsheet.
+- The search box in the top bar (or ⌘K / Ctrl+K) finds guests, bookings
+  and rooms from any screen.
+
+Click a booking to open its detail panel: everything about the stay on one
+screen.
+
+![The detail panel of a confirmed booking: status and source, billing totals, the deposit and security deposit, then stay dates and identity](/img/reservations/reservation.png)
+
+- **Billing**: total, paid and balance due, with **Open folio →**.
+- **Deposit** and **Security deposit** (see [Take a deposit before
+  arrival](#take-a-deposit-before-arrival)).
+- **Stay**: the dates (editable), **Late arrival**, nights, guests and the
+  confirmed rate per night.
+- **Identity**: the online check-in status and the guest's ID photo, with
+  **Verify identity** after the guest checks in online.
+- **Room**, **Guest** (with **Guest journey →**) and **Booked by**.
+- **Special requests**: type and **Save note**.
+- At the bottom: **Check in**, **Check out**, **Registration card** and
+  **Cancel this stay…**, whichever apply.
+
+![The lower half of the panel: stay, identity, room and guest cards, special requests, and the Check in, Registration card and Cancel this stay buttons](/img/reservations/reservation-lower.png)
+
+## Change a booking
+
+From the booking's detail panel:
+
+- **New dates:** change **Check-in** or **Check-out** in the **Stay** card
+  and click **Update dates & re-price**. Kamra prices the new dates and
+  asks you to confirm the new total with the guest before it saves. A
+  booking with a manual price keeps its amount.
+- **Another room:** click **Change room** (or **Assign room**) in the
+  **Room** card. See [Move a guest to another room](/front-desk#move-a-guest-to-another-room).
+- **Late arrival:** tick **Late arrival** so the night audit keeps the
+  arrival as Due In instead of marking a no-show.
+
+Only confirmed and checked-in bookings can be changed.
+
+## Move a stay on the tape chart
+
+**Front Desk → Tape Chart** shows rooms down the side and dates across the
+top, with each stay as a bar. Use it to see who is in which room and to
+move stays around.
+
+To book a free room, click an empty cell on today or a later date.
+**New booking** opens with that room type, room and date filled in, and
+the booking is kept on that room (it shows **Room** and the number). If
+you change the room type, Kamra picks the room for you instead.
+
+![The tape chart for two weeks: rooms grouped by type, guest bars, and the position row with rooms sold per day](/img/reservations/tape-chart.png)
+
+1. Click (or tap) a guest's bar. A panel opens with the room, the dates
+   and the actions for that stay.
+2. **Move room** opens the room picker: choose a room, check the price
+   line, pick a reason and click **Move to** the room. See
+   [Move a guest to another room](/front-desk#move-a-guest-to-another-room).
+3. **Change dates** shows the check-in and check-out dates. Change them
+   and Kamra shows the new number of nights and the new stay total. Click
+   **Confirm new dates** (or **Confirm new dates and price** when the
+   total changes). Once the guest is checked in, only the check-out date
+   can change.
+4. **Check in** shows on the arrival day and opens the guided check-in.
+   **Check out** shows for a checked-in guest and opens the guided
+   check-out.
+5. To record when the guest arrives and leaves, set the times under
+   **Arrival / departure times (ETA · ETD)** and click **Set**.
+6. **Open reservation** opens the booking in the reservations list.
+
+With a mouse you can also drag:
+
+- Drag a bar onto another room's row. The room picker opens with that
+  room chosen, so you see the price and pick a reason before the move.
+- Drag a bar sideways, or drag its start or end edge, to change the
+  dates. The panel opens with the new dates filled in and the new price;
+  nothing changes until you confirm.
+
+Drag does not work with touch. On a tablet, tap the bar and use the
+buttons. Kamra checks every change on the server: a room that is taken,
+or a date change that overlaps another booking, is refused.
+
+![The panel that opens from a tape chart bar: the stay's room and dates, the Move room, Change dates and Check out buttons, and arrival and departure times](/img/reservations/tape-bar.png)
+
+What else is on the tape chart:
+
+- The **Position** row shows rooms sold out of rooms available each day.
+  ▲ means a demand premium is on; OB means the day is overbooked.
+- A dot on each bar marks VIP, corporate, group or OTA stays; a lock marks
+  a room held by a room block.
+- When an arrival is due before the previous guest's departure time, the
+  chart flags a changeover conflict.
+- **Hourly** shows today hour by hour, for day-use stays.
+- **Auto-assign arrivals** suggests a room for each arrival without one,
+  matched to type and preferences. **Review** marks a choice worth a second
+  look; **Assign** places them all.
+
+## Sell from the calendar
+
+**Front Desk → Calendar** shows two weeks of availability by room type:
+the number of rooms left and the nightly rate for two adults, with seasons
+applied. Click a cell to open **New booking** with that room type and date
+filled in.
+
+![The availability calendar: rooms left and the rate for each room type over two weeks, with weekends in green](/img/reservations/calendar.png)
+
+## Take a deposit before arrival
+
+The **Deposit** box is on the booking-confirmed screen and in the
+booking's detail panel. It shows what the booking should secure, what has
+come in, and what is still due. The percentage comes from the stay's
+dates: a [season](/revenue#add-a-season) with an **Advance % at booking**
+sets it (25%, 50%, 100%), otherwise the property's **Deposit expected at
+booking** in Stay policies applies. So two bookings by the same guest at
+the same hotel can owe different advances. A stay that crosses seasons
+owes the highest percentage. The percentage is kept with the booking when
+it is priced; changing the season later does not change it.
+
+- **Record payment**: the guest paid at the desk or by transfer. Pick the
+  method, check the amount and click **Record ₹…**. It goes through your
+  till, so you need an open cashier session.
+- **Send payment link**: shown when a payment gateway is connected. Kamra
+  creates a link for the amount due and a ready message; click **Copy
+  message** or **WhatsApp**. When the guest pays, the deposit records
+  itself.
+
+The money sits on the guest folio as an advance and counts against the
+bill at check-in. A booking that is Held or Pending Payment is confirmed by
+its deposit. Taking money from a guest who is already in-house happens on
+the folio; see [Billing](/billing).
+
+## Cancel a booking
+
+1. Open the booking (**Reservations** → click it).
+2. Click **Cancel this stay…** at the bottom.
+3. Read the line at the top. It tells you how many days are left before
+   arrival and whether the cancellation is free or what fee applies.
+4. Pick a **Reason** and add a note if you like.
+5. To let the guest off the fee, tick **Waive the fee (logged - manager's
+   call)**.
+6. Click **Confirm cancellation**.
+
+![Cancelling a booking on its arrival day: inside the 2-day window, so the first night will be charged, with the reason, note and waive option](/img/reservations/cancel-preview.png)
+
+Kamra gives a cancellation number (CXL-…) and posts any fee to the folio.
+Click **Print / share the confirmation letter** for a letter to send the
+guest.
+
+![The cancellation confirmation letter with the cancellation number, stay value and cancellation fee](/img/reservations/cancellation-letter.png)
+
+How the fee is worked out:
+
+- Cancelling earlier than **Free cancellation until** days before arrival
+  is free.
+- Inside that window, the **Late cancellation fee** applies: None, First
+  Night or Full Stay.
+- If the property has cancellation tiers (for example free beyond 7 days,
+  50% from 3 to 7 days, 100% inside 3), the tier for the days left sets the
+  percentage instead.
+- Dates in a non-refundable season are charged 100%.
+
+Only confirmed bookings can be cancelled. A guest who is in-house checks
+out instead. You can't cancel by changing the status field; it has to go
+through **Cancel this stay…** so the policy is applied.
+
+## Answer a booking request
+
+When the booking engine runs in Request-to-Book mode, online bookings
+arrive as requests for you to approve
+([Booking engine](/booking-engine)). They show in **Booking requests** on
+**Today** and with the status Requested. A request does not hold a room.
+
+- **Accept** checks availability again and takes a room.
+- **Decline** needs a reason, cancels the request with no fee, and tells
+  the guest.
+
+## Book at another property
+
+If you run more than one property, **Front Desk → Central Reservations**
+searches all of them at once.
+
+1. Set **Check-in**, **Nights**, **Adults** and **Children**, and click
+   **Search**.
+2. Each property with space lists its room types, rooms left and the total
+   with taxes.
+3. Click **Book**, enter the guest's name and phone, and click **Confirm
+   booking**.
+
+![Central reservations: availability for one night for two adults across three properties, with a Book button on each room type](/img/reservations/crs.png)
+
+## Book a trip across properties
+
+A guest, travel agent or company can book one trip that moves between
+your hotels, for example 2 nights at one, then 3 nights at another. The
+trip gets one reference (ITN-...) the guest can quote.
+
+1. In **Front Desk → Central Reservations**, search the first stop and
+   click **Add to trip** on the room type.
+2. Check-in moves to the day that stay ends. Set the nights, search again
+   and click **Add to trip** for the next stop. Repeat for each stop.
+3. **New trip** lists the stops in date order with each price, the
+   trip total and the advance due at booking (each stop at its own
+   percentage). Enter the guest's name and phone and click **Book trip**.
+
+Each stop becomes a normal booking at its own property, with its own room,
+bill and invoice. All stops book or none do. Two stops can't share a
+night; a stop can start the day the previous one ends.
+
+**Trips** lists recent trips. Click one to see each stop's status, price,
+advance percentage, advance paid and advance still due, and the trip's
+advance due against paid.
+
+- **Take trip advance** takes one payment for the whole trip. The amount
+  starts at the trip's advance still due; change it and click **Show
+  split** to see how it is shared, then **Take**. Each stop first gets the
+  advance its own dates ask for, earliest stop first. Anything more goes to
+  the earliest stop, up to that stop's bill, then the next one. (Putting
+  the extra on the first stay means the guest's money is used soonest, and
+  no hotel ends up holding more than its own bill, so nobody has to refund
+  an overpayment at check-out.) A payment larger than what the trip still
+  owes is refused, and so is a trip whose stops are billed in different
+  currencies. Each share posts as an advance on that stop's own folio, at
+  its own property, through its till, so each hotel's books and tax stay
+  its own. All shares post or none do.
+- **Take an advance on one stop**: click **Open RES-...** and take it
+  there, as for any booking. Money is never held on the trip itself.
+  Refunds and cancellation of a stop follow that stop's own policy.
+- **Change dates or cancel one stop** the same way, from its booking. A
+  new date that runs into another stop is refused.
+- **Cancel whole trip** shows each stop's fee under its own property's
+  policy, then cancels every confirmed stop. Stops already checked in or
+  finished are left as they are.
+- **Confirmation** opens a printable page with every stop and the
+  reference.
+
+You only see a trip if you can access every property in it.
+
+
+## Hold rooms for a group
+
+For a wedding, conference or tour, keep a block of rooms first and name
+the guests later. Groups live in **Front Desk → Group Booking** (the
+**Groups & Blocks** list).
+
+1. Click **New group booking** (or, in **New booking**, click **Group
+   booking with a main room**). The window has four steps.
+2. **Group:** the **Group name**, **Group type** (Corporate, Wedding,
+   Event, Tour, Other), **Arrival** and **Departure**, and **Who pays**:
+   **The main room's guest** or **A company**. Fill in the main guest's
+   name and phone.
+3. **Rooms:** one row per **Room type** with the number of rooms; each
+   row shows how many are free on these dates. **More options** sets a
+   **Group rate / night** (Revenue Manager or Hotel Admin) and a
+   **Different number of rooms each night**.
+4. **Guest names:** name the guest for each room, one by one or with
+   **Paste from Excel** (Name, Phone, Room type, Other guests) or **Upload
+   CSV**. Rooms left empty stay held for the group and can be named later.
+   Pick the **Main room**.
+5. **Price and confirm:** the room-nights, rate and total, and what the
+   main room pays (**Room + tax** by default). **More options** sets the
+   **Deposit to ask for** and the **Rooms they can give back free (%)**.
+   Click **Book group**, or **Save as quotation** when the client hasn't
+   agreed yet: nothing is kept or booked, and you can print it.
+
+Rooms that can't be booked are listed with the reason; the rest are booked.
+
+## Run the group
+
+Click a group in the list to open it. **What to do next** at the top says
+what the group needs now (name guests, take the deposit, check rooms in,
+settle the group bill) with the button for it, and the tiles show rooms
+named, room charges, paid so far and still to pay.
+
+![A wedding group: what to do next, the rooms named, charges and payments, and the guest list with each room, its status and Check in](/img/reservations/group.png)
+
+- **Guests:** the guest list. Type names and phones straight into the
+  rows and press **Save names**, or use **Paste from Excel**. **Add a
+  guest** books one more room from the rooms still kept free. Tick rooms
+  to act on some of them, or none for all: **Check in**, **Check out**,
+  **Change dates** or **Cancel rooms**. Each row also has its own **Check
+  in** (the usual guided check-in, with ID and documents) and **Check
+  out**, so guests can arrive on different days.
+- **Rooms:** **Rooms kept for this group**, by room type, with how many
+  have guests and how many are free. Change the rooms or the group rate,
+  **Keep free rooms until** (after this date, rooms without a guest name
+  go back on sale) and **Rooms they can give back free (%)**, then press
+  **Save changes**. A quotation gets **Confirm booking** here.
+- **Bill:** **Who pays**: the main guest or the company, and **Each
+  guest's own bill** with what each guest owes for their extras.
+
+Kamra warns you before the hold date if the group has used fewer rooms
+than agreed. For events tied to the group, see [Banquets](/banquets).
+
+**The main guest can leave first.** Checking out the main room does not
+close the group bill: it stays open, and room charges of the rooms still in
+house keep landing on it. Settle it when the group is done (see
+[Billing](/billing#bill-a-group-from-its-main-room)).
+
+## Take a room out of sale
+
+To keep a room free for house use, a VIP, the owner or maintenance:
+
+1. **Front Desk → Room Blocks → New**.
+2. Pick the **Room** and the **Reason** (House Use, VIP Hold, Owner,
+   Maintenance, Other).
+3. Set **From date** and **To date (exclusive)**, add a **Note**, and save.
+
+A blocked room doesn't show as available and won't sell; it shows with a
+lock on the tape chart. Set **Status** to Released to put it back on sale.
+
+## Settings
+
+| Setting | Where | Default | What it does |
+| --- | --- | --- | --- |
+| Minimum stay | Settings → Stay policies | 1 night | Shorter bookings are refused. Seasons can set their own minimum. |
+| Free cancellation until | Settings → Stay policies | 1 day before | Cancellations earlier than this are free. |
+| Late cancellation fee | Settings → Stay policies | First Night | None, First Night or Full Stay, charged inside the window. |
+| No-show charge | Settings → Stay policies | First Night | Posted by the night audit when a guest doesn't come. |
+| Deposit expected at booking | Settings → Stay policies | 0% | Quoted in the booking window and shown in the Deposit box. |
+| Hold unconfirmed bookings for | Settings → Front Desk → Holds & selling | 120 min | How long a Held or Pending Payment booking keeps its room before it is released. |
+| Sell message | Settings → Front Desk → Holds & selling | - | Shown at the top of the booking window as a reminder of what to offer. |
+| Release non-guaranteed arrivals at | Settings → Front Desk → Night audit & no-shows | Blank (never) | At this time, today's arrivals with no payment or deposit (not OTA or company bookings, not flagged late) are cancelled with no fee. |
+
+## Good to know
+
+- A new booking can't start in the past.
+- A double booking of the same room for the same dates is refused.
+- A blacklisted guest can be booked only by a Hotel Admin, who must tick
+  **I understand and want to book this guest anyway** and give a reason. A
+  multi-room booking can't override a blacklist.
+- Changing dates or room type re-prices the stay. Kamra always shows the
+  new total and asks before it saves.
+- Every booking, change, move and cancellation is written to the activity
+  log with who did it.
+- No-shows are marked by the night audit; see [Night audit](/night-audit).
+
+## Troubleshooting
+
+**"Check-in … has already passed."** The check-in date is before today.
+Pick today or a later date.
+
+**"… is sold out for …"** Every room of the type is sold for at least one
+night of the stay (group blocks count as sold). Try another room type, use
+**Waitlist**, or check the tape chart for a move.
+
+**"This property requires a stay of at least … nights."** The stay is
+shorter than the minimum stay for the property or the season.
+
+**"Only confirmed bookings can be cancelled."** The guest is already
+checked in (check them out instead), or the booking is already cancelled.
+
+**There is no Send payment link button.** No payment gateway is connected
+for the property. Use **Record payment**, or connect a gateway (see
+[Settings](/settings)).
+
+## For developers
+
+Bookings are made with `kamra.api.create_booking` (one room) and
+`kamra.api.create_group_booking` (several), priced by `kamra.api.get_quote`.
+The detail panel reads `kamra.api.reservation_detail`; date changes use
+`kamra.api.amend_stay_preview` and `kamra.api.amend_stay`; cancelling uses
+`kamra.api.cancellation_preview` and `kamra.api.cancel_reservation`; the
+waitlist uses `kamra.api.promote_waitlist`. AI agents use the `quote`,
+`create_booking`, `add_to_waitlist`, `promote_waitlist`,
+`cancellation_preview`, `cancel_booking`, `amend_stay`, `move_room` and
+`create_group_block` tools. Trips across properties use
+`kamra.crs.quote_itinerary`, `create_itinerary`, `get_itinerary`,
+`add_itinerary_leg`, `cancel_itinerary_preview` and `cancel_itinerary`
+(MCP tools of the same names). See [MCP tools](/mcp-tools) and the
+[API reference](/api-reference).

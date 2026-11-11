@@ -1,0 +1,140 @@
+# FAQ
+
+## Is anything locked behind a paid plan?
+
+**No.** Every feature is open source and included everywhere. Paid
+options are implementation, support and setup work (WhatsApp gateway,
+payment gateway). Those are services, not feature gates. The GSTR-1 export
+files are free for everyone.
+
+## Why is there no per-room pricing?
+
+Adding rooms doesn't make software cost more, so charging per room is a
+tax on your growth. Self-hosting is free at any size; Cloud pricing
+scales only with the server your property needs.
+
+## What are the default login credentials?
+
+There aren't any. After `bench new-site … --admin-password <password>`,
+open `/kamra` and sign in as **Administrator** or **admin@example.com**
+with that password. Forgot it:
+`bench --site <site> set-admin-password <new-password>` (on Docker, prefix
+with `docker compose exec backend`). Staff should then get their own email
+logins.
+
+## What does self-hosting really require?
+
+A 2 vCPU / 4 GB / 40 GB VPS (~₹549-$24/month), a domain, and an
+afternoon. See the [guides](/self-hosting/). You manage updates and
+backups; both are one command.
+
+## Can I move between Cloud and self-hosting?
+
+Yes, both directions. It's standard Frappe - `bench backup` produces a
+full database + files archive that restores anywhere.
+
+## Does the AI ever set prices or taxes?
+
+No. Rates, taxes, availability and policy fees are deterministic code,
+verified by an automated eval suite in CI. AI agents call governed tools
+as permission-checked users and cannot go around them.
+
+## Which Frappe version does Kamra need?
+
+Frappe **v16** (with the `payments` app). Install from the `main` branch
+for stable; `develop` is the nightly channel.
+
+## How do I install from the Frappe Cloud Marketplace?
+
+Create a **private** Frappe v16 bench (not a shared trial site), add
+[Kamra from the marketplace](https://frappecloud.com/marketplace/apps/kamra),
+deploy, install it on the site, then open `/kamra/setup`. Step-by-step:
+[Install via Frappe Cloud](/self-hosting/frappe-cloud). Prefer your own
+VPS? Use the [self-hosting guides](/self-hosting/) - same software.
+
+## Does Marketplace Kamra include ERPNext or HR?
+
+**No.** Kamra installs with `payments` only. Company books (ERPNext) and
+payroll (Frappe HR) are optional apps on the **same site** when you want
+them - on Frappe Cloud or your own server. See
+[ERPNext and Frappe HR](/self-hosting/erpnext-hr).
+
+## How does Kamra version its own releases?
+
+**Patch-first.** Small features and fixes ship as `2.6.1`, `2.6.2`, and so
+on. A larger `2.7.0`-style cut only happens when maintainers deliberately
+want one - not automatically on every `feat:` commit. See the
+[changelog](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md)
+and [releasing notes](https://github.com/Kamra-PMS/kamra-pms/blob/main/RELEASING.md)
+in the repo.
+
+## Can I downgrade after trying a newer version?
+
+**Not from a button in `/kamra`.** System Health only documents how to
+upgrade; it does not change the install. On a self-hosted Docker site,
+pin the release you want again:
+
+```bash
+sudo KAMRA_TAG=v2.6.19 /opt/kamra/install.sh update
+```
+
+Use the tag you were on before. Updates always backup first; if migrate
+has already moved the database forward, restore that backup when the
+older image will not run cleanly. Details:
+[Going back (downgrade)](/quickstart#going-back-downgrade).
+
+## How do I give a guest a discount?
+
+On the folio, under **Post a charge**, use **Give a discount**: a percent,
+an amount for the whole stay or per night, or a promo code. It comes off
+the room nights on the bill. At check-out, press **Give a discount before
+collecting**. See [Give a discount](/billing#give-a-discount).
+
+## Who can give discounts?
+
+Turn on **Allowances need a manager's approval** (Settings → Finance →
+Cashier controls) and pick who approves. Above the amount you set, the
+desk only asks and a manager approves with their PIN.
+
+## Can a promo code be used more than once?
+
+Yes. **Max uses** on the voucher (Revenue → Vouchers) sets how many times;
+0 means unlimited. Each stay can use a code once.
+
+## Why can't I refund?
+
+A refund goes out only when the guest is in credit, and only up to what is
+due back. A guest who still owes settles first.
+
+## Does night audit post the room charges?
+
+Yes, for every in-house guest in one run. Guests past their departure
+date show in step 3: check them out or extend the stay, or turn on
+**Extend unchecked-out departures one night** and the audit extends and
+posts them. See [Night audit](/night-audit).
+
+## Can reports be emailed after night audit?
+
+Yes. Set a custom report's email schedule to **After night audit**. See
+[Email reports after the audit](/night-audit#email-reports-after-the-audit).
+
+## We don't serve alcohol. Can we hide it?
+
+Yes. Turn off **Sells alcohol** under Settings → Property → Location &
+locale, and every alcohol field and label disappears in every language.
+
+## How do I correct a translation?
+
+See [Fix a translation](/contributors#fix-a-translation).
+
+## How do I report a bug or ask for a feature?
+
+[GitHub issues](https://github.com/Kamra-PMS/kamra-pms/issues) for bugs
+and requests, discussions for questions. Security reports: see
+`SECURITY.md` - please don't open public issues for those.
+
+## Who builds Kamra?
+
+[HeyKoala](https://heykoala.ai). The PMS is our open-source foundation;
+we make money hosting it and building AI hotel staff on top - not by
+gating features.

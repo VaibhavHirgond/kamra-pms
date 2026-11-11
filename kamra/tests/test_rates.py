@@ -1,0 +1,151 @@
+"""The rate explained: BAR, season, demand, rate plan, voucher."""
+
+from __future__ import annotations
+
+from decimal import Decimal
+
+import frappe
+from frappe.utils import add_days, getdate
+
+from kamra import pricing, rates
+from kamra.tests.audit_fixtures import PROP_A, TODAY, AuditTestCase, make_property, make_room_type
+
+
+class RatesTestCase(AuditTestCase):
+	properties = (PROP_A,)
+
+	def setUp(self):
+		super().setUp()
+		self.at(TODAY)
+		make_property(PROP_A, business_date=TODAY)
+		self.rt = make_room_type(PROP_A, "STD", base_price=1000)
+		self.day = str(getdate(TODAY))
+		self.next = str(add_days(self.day, 1))
+
+	def season(self, **kw):
+		return frappe.get_doc(dict({
+			"doctype": "Season", "property": PROP_A, "season_name": "UT Peak", "room_type": self.rt,
+			"start_date": self.day, "end_date": self.day, "adjustment_type": "Percent",
+			"adjustment_value": 20, "priority": 10}, **kw)).insert(ignore_permissions=True)
+
+	def test_bar_alone_is_the_base_price(self):
+		n = rates.explain_night(PROP_A, frappe.get_doc("Room Type", self.rt), self.day)
+		self.assertEqual((n["bar"], n["rate"]), (1000.0, 1000.0))
+		self.assertIsNone(n["season"])
+		self.assertIsNone(n["demand"])
+
+	def test_season_is_named_and_moves_the_rate(self):
+		self.season()
+		n = rates.explain_night(PROP_A, frappe.get_doc("Room Type", self.rt), self.day)
+		self.assertEqual(n["bar"], 1000.0)
+		self.assertEqual(n["rate"], 1200.0)
+		self.assertEqual(n["season"]["label"], "UT Peak")
+		self.assertEqual(n["season"]["change"], "+20%")
+
+	def test_what_is_explained_is_what_the_quote_charges(self):
+		self.season()
+		n = rates.explain_night(PROP_A, frappe.get_doc("Room Type", self.rt), self.day)
+		q = pricing.quote(PROP_A, self.rt, self.day, self.next, 2, 0)
+		self.assertAlmostEqual(q["nightly"][0]["rate"], n["rate"], places=2)
+
+	def test_season_refactor_keeps_the_price(self):
+		self.season(adjustment_type="Absolute", adjustment_value=1500)
+		self.assertEqual(pricing.season_adjust(PROP_A, self.day, Decimal(1000), self.rt), Decimal(1500))
+		self.assertEqual(pricing.season_adjust(PROP_A, self.next, Decimal(1000), self.rt), Decimal(1000))
+
+	def test_rate_calendar_covers_every_room_type_and_date(self):
+		self.season()
+		cal = rates.rate_calendar(PROP_A, self.day, days=3)
+		row = [r for r in cal["room_types"] if r["room_type"] == self.rt][0]
+		self.assertEqual(len(row["nights"]), 3)
+		self.assertEqual([n["rate"] for n in row["nights"]], [1200.0, 1000.0, 1000.0])
+
+	def test_plans_and_voucher_are_real_quotes(self):
+		frappe.get_doc({"doctype": "Rate Plan", "property": PROP_A, "rate_plan_name": "UT Corp",
+		                "code": "UTC", "modifier_type": "Percent", "modifier_value": -10}
+		               ).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "Discount Voucher", "property": PROP_A, "voucher_code": "UT10",
+		                "discount_type": "Percent", "value": 10}).insert(ignore_permissions=True)
+		out = rates.rate_options(PROP_A, self.rt, self.day, self.next, voucher_code="ut10")
+		plan = out["plans"][0]
+		self.assertEqual(plan["room_total"], 900.0)
+		self.assertEqual(plan["vs_plain"], -100.0)
+		self.assertTrue(out["voucher"]["valid"])
+		self.assertGreater(out["voucher"]["discount"], 0)
+
+	def test_a_bad_voucher_says_why(self):
+		out = rates.rate_options(PROP_A, self.rt, self.day, self.next, voucher_code="NOPE")
+		self.assertFalse(out["voucher"]["valid"])
+		self.assertIn("does not exist", out["voucher"]["reason"])
+
+	def test_quote_occupancy_breakdown_and_edge_cases(self):
+		"""Edge cases for occupancy: 1 pax (single discount/base), 2 pax (base),
+		4 pax (extra adults), 5 pax (extra adult + extra bed), and over-capacity."""
+		rt_doc = frappe.get_doc("Room Type", self.rt)
+		rt_doc.base_occupancy = 2
+		rt_doc.base_price = 200
+		rt_doc.adults_capacity = 4
+		rt_doc.extra_adult_price = 80
+		rt_doc.max_extra_beds = 1
+		rt_doc.extra_bed_price = 50
+		rt_doc.single_occupancy_price = 180
+		rt_doc.tax_percent = 5
+		rt_doc.save(ignore_permissions=True)
+
+		# 1 Adult: single occupancy rate (180 + 5% tax = 189)
+		q1 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=1, children=0)
+		self.assertEqual(q1["room_total"], 180.0)
+		self.assertEqual(q1["totals"]["total"], 189.0)
+
+		# 2 Adults: exact base occupancy (200 + 5% tax = 210)
+		q2 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=2, children=0)
+		self.assertEqual(q2["room_total"], 200.0)
+		self.assertEqual(q2["totals"]["total"], 210.0)
+
+		# 4 Adults: base 200 + 2 extra adults @ 80 = 360 (+ 5% tax 18 = 378)
+		q4 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=4, children=0)
+		self.assertEqual(q4["room_total"], 360.0)
+		self.assertEqual(q4["totals"]["total"], 378.0)
+
+		# 5 Adults: above capacity. The quote prices the room for its 4; the
+		# guest over capacity is charged by the caller's over_capacity_charge
+		q5 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=5, children=0)
+		self.assertEqual(q5["room_total"], 360.0)
+		self.assertEqual(q5["totals"]["total"], 378.0)
+		q5b = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=5, children=0,
+		                    over_capacity_charge=50)
+		self.assertEqual(q5b["totals"]["total"], 430.5)  # (360 + 50) + 5% tax
+
+	def test_holiday_package_rate_integration(self):
+		"""Holiday Package overrides base rate with tiered occupancy pricing (e.g. 1850 for 2, 2500 for 3)."""
+		day2 = str(add_days(self.day, 2))
+		day3 = str(add_days(self.day, 3))
+		frappe.get_doc({
+			"doctype": "Holiday Package",
+			"property": PROP_A,
+			"package_name": "Pacote Feriado 3N",
+			"room_type": self.rt,
+			"start_date": self.day,
+			"end_date": day2,
+			"minimum_nights": 3,
+			"price_2_pax": 1850,
+			"price_3_pax": 2500,
+			"price_4_pax": 3000,
+			"ota_strategy": "Markup",
+			"ota_daily_rate": 1300,
+		}).insert(ignore_permissions=True)
+
+		# 2 pax -> 1850
+		q2 = pricing.quote(PROP_A, self.rt, self.day, day3, adults=2, children=0)
+		self.assertEqual(q2["room_total"], 1850.0)
+		self.assertEqual(q2["package"]["package_name"], "Pacote Feriado 3N")
+		self.assertEqual(q2["package"]["ota_daily_rate"], 1300.0)
+
+		# 3 pax -> 2500
+		q3 = pricing.quote(PROP_A, self.rt, self.day, day3, adults=3, children=0)
+		self.assertEqual(q3["room_total"], 2500.0)
+
+		# 4 pax -> 3000
+		q4 = pricing.quote(PROP_A, self.rt, self.day, day3, adults=4, children=0)
+		self.assertEqual(q4["room_total"], 3000.0)
+

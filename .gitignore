@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+
+# Frappe
+kamra/public/dist/
+kamra/public/node_modules/
+*.log
+
+# Local
+.DS_Store
+.env
+
+# Internal operator plans — keep local only, never publish
+PLAN.md
+docs/adr-str.md
+docs-site/node_modules/
+docs-site/.vitepress/dist/
+docs-site/.vitepress/cache/
+
+graphify-out/
+node_modules
+
+# MkDocs learning environment
+.venv-docs/
+
+# Local broken backup — never publish
+kamra/channels/channex.py.save
+
+# Separate MkDocs learning project — keep local only
+mkdocs-learning/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Credentials and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+credentials.json
+secrets.json
+
+# Python caches and local environments
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+venv/
+env/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db

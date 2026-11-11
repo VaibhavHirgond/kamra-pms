@@ -1,0 +1,252 @@
+import { t as translate, uiDateLocale } from "./i18n"
+/** 80mm thermal printing for KOT tickets and bills.
+ *
+ * Opens a bare popup, renders the ticket with an `@page: 80mm` sheet and a
+ * monospace layout, prints, and closes itself after the print dialog. Works
+ * with any OS-installed thermal driver (80mm and 58mm both render fine -
+ * the body is 72mm, the common printable width).
+ */
+
+import { cur, moneyLocale } from "./money"
+
+const CSS = `
+  @page { size: 80mm auto; margin: 0 }
+  * { margin: 0; padding: 0; box-sizing: border-box }
+  html, body { background: #fff; color: #000 }
+  body { width: 72mm; margin: 0 auto; padding: 3mm 1mm 18mm;
+         font: 13px/1.35 "Courier New", ui-monospace, monospace; color: #000 }
+  .c { text-align: center }
+  .b { font-weight: 700 }
+  .xl { font-size: 20px; letter-spacing: 0.02em }
+  .lg { font-size: 15px }
+  .sm { font-size: 11px }
+  .rule { border-top: 2px dashed #000; margin: 6px 0 }
+  .row { display: flex; justify-content: space-between; gap: 8px }
+  table { width: 100%; border-collapse: collapse; font-size: 14px }
+  td { padding: 3px 0; vertical-align: top }
+  .num { text-align: right; white-space: nowrap; font-weight: 700; width: 28px }
+  .ins { font-size: 12px; font-weight: 700; padding-left: 28px }
+  .cut { text-align: center; font-size: 10px; margin-top: 10px; letter-spacing: 0.2em }
+`
+
+const esc = (s: unknown) =>
+  String(s ?? "").replace(/[&<>"]/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string))
+
+const inr = (n: unknown) =>
+  Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/** Print without a popup. Popups get blocked on a till; an iframe does not. */
+export function printThermal(title: string, body: string): boolean {
+  document.querySelectorAll("iframe[data-kamra-print]").forEach((n) => n.remove())
+  const iframe = document.createElement("iframe")
+  iframe.setAttribute("data-kamra-print", "1")
+  iframe.setAttribute("title", translate(title))
+  iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0"
+  document.body.appendChild(iframe)
+  const w = iframe.contentWindow
+  if (!w) { iframe.remove(); return false }
+  w.document.open()
+  w.document.write(
+    `<!doctype html><html><head><title>${esc(translate(title))}</title>` +
+    `<style>${CSS}</style></head><body>${body}</body></html>`)
+  w.document.close()
+  const cleanup = () => { try { iframe.remove() } catch { /* already gone */ } }
+  w.onafterprint = cleanup
+  // The ticket is inline HTML + CSS with nothing to load, so print on the
+  // next tick rather than after a fixed delay.
+  setTimeout(() => {
+    try {
+      w.focus()
+      const t0 = performance.now()
+      w.print() // blocks while a print dialog is open; returns at once with --kiosk-printing
+      if (performance.now() - t0 > 1500) {
+        window.dispatchEvent(new CustomEvent(PRINT_DIALOG_EVENT))
+      }
+    } catch { cleanup() }
+  }, 0)
+  setTimeout(cleanup, 120_000)
+  return true
+}
+
+/** Fired when a print looked like it waited on a dialog: the till can tell
+ *  staff how to print silently (Chrome --kiosk-printing). */
+export const PRINT_DIALOG_EVENT = "kamra:print-dialog"
+
+export interface KotLine { item_name: string; qty: number; instructions?: string | null }
+
+export function kotHtml(o: {
+  outlet: string
+  kot_no: number | null
+  label: string
+  order_type?: string | null
+  order: string
+  reprint?: boolean
+  customer?: string | null
+  address?: string | null
+  nc?: boolean
+  nc_by?: string | null
+  items: KotLine[]
+  /** a kitchen printer's slice of the round: which station(s) it covers */
+  station?: string | null
+  /** Void: lines to stop cooking. Test: a printer test page. */
+  kind?: string | null
+  /** printed on the fallback because this printer failed */
+  fallback_from?: string | null
+}) {
+  const when = new Date().toLocaleString(uiDateLocale(moneyLocale()), {
+    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+  })
+  const rows = o.items.map((it) =>
+    `<tr><td class="num b" style="width:24px">${Math.round(it.qty)}×</td>` +
+    `<td class="b">${esc(it.item_name)}</td></tr>` +
+    (it.instructions
+      ? `<tr><td></td><td class="ins">» ${esc(it.instructions)}</td></tr>`
+      : "")).join("")
+  return `
+    <div class="c b lg">${esc(o.outlet)}</div>
+    <div class="c xl b">${o.kind === "Void" ? esc(translate("*** VOID *** KOT #{number}", { number: String(o.kot_no ?? "-") }))
+      : o.kind === "Test" ? esc(translate("TEST PAGE"))
+        : esc(translate("KOT #{number}", { number: String(o.kot_no ?? "-") }))}${o.reprint ? esc(translate(" (REPRINT)")) : ""}</div>
+    ${o.station ? `<div class="c b">${esc(o.station)}</div>` : ""}
+    ${o.fallback_from ? `<div class="c sm">${esc(translate("for"))} ${esc(o.fallback_from)}</div>` : ""}
+    ${o.nc ? `<div class="c b lg">${esc(translate("*** NC - NO CHARGE ***"))}</div>` +
+      (o.nc_by ? `<div class="c sm">${esc(translate("auth:"))} ${esc(o.nc_by)}</div>` : "") : ""}
+    <div class="rule"></div>
+    <div class="row"><span class="b lg">${esc(translate(o.label))}</span><span class="sm">${esc(translate(o.order_type || ""))}</span></div>
+    <div class="row sm"><span>${esc(o.order)}</span><span>${when}</span></div>
+    ${o.customer ? `<div class="sm">${esc(translate("For:"))} ${esc(o.customer)}</div>` : ""}
+    ${o.address ? `<div class="sm">→ ${esc(o.address)}</div>` : ""}
+    <div class="rule"></div>
+    <table>${rows}</table>
+    <div class="rule"></div>
+    <div class="c sm">${o.items.length} ${esc(translate("item"))}${o.items.length === 1 ? "" : "s"}</div>
+    <div class="cut">${esc(translate("- cut -"))}</div>`
+}
+
+/** Several tickets in one print: one paper cut between each. */
+export function joinTickets(bodies: string[]): string {
+  return bodies.join('<div style="break-after:page;page-break-after:always"></div>')
+}
+
+export function laundryDocketHtml(o: {
+  property_name?: string
+  order: string
+  room_no: string
+  guest_name?: string | null
+  order_type?: string
+  express?: boolean
+  ready_by?: string | null
+  items: { item_name: string; service_type: string; qty: number }[]
+  total: number
+}) {
+  const when = new Date().toLocaleString(uiDateLocale(moneyLocale()), {
+    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+  })
+  const rows = o.items.map((it) =>
+    `<tr><td class="num b" style="width:26px">${Math.round(it.qty)}×</td>` +
+    `<td class="b">${esc(it.item_name)}` +
+    `<div class="sm" style="font-weight:400">${esc(translate(it.service_type))}</div>` +
+    `</td></tr>`).join("")
+  return `
+    <div class="c b lg">${esc(o.property_name || translate("Laundry"))}</div>
+    <div class="c xl b">${esc(translate("LAUNDRY DOCKET"))}</div>
+    <div class="rule"></div>
+    <div class="row"><span class="b lg">${esc(o.room_no)}</span>` +
+    `<span class="sm">${esc(translate(o.order_type || "Guest"))}</span></div>
+    <div class="row sm"><span>${esc(o.order)}</span><span>${when}</span></div>
+    ${o.guest_name ? `<div class="sm">${esc(o.guest_name)}</div>` : ""}
+    ${o.express ? `<div class="c b">${esc(translate("EXPRESS - SAME DAY"))}</div>` : ""}
+    ${o.ready_by ? `<div class="sm">${esc(translate("Ready by:"))} ${esc(o.ready_by)}</div>` : ""}
+    <div class="rule"></div>
+    <table>${rows}</table>
+    <div class="rule"></div>
+    <div class="row b lg"><span>${esc(translate("Total"))}</span><span class="num">${cur()}${inr(o.total)}</span></div>
+    <div class="c sm">${esc(translate("Counted with the guest. Billed to the room."))}</div>`
+}
+
+export interface BillData {
+  order: string
+  kot_no: number | null
+  property_name: string
+  outlet_name: string
+  order_type: string | null
+  table_no: string | null
+  room_no: string | null
+  customer_name: string | null
+  customer_phone: string | null
+  delivery_address: string | null
+  captain: string | null
+  /** the waiter typed on the bill, else the captain's name */
+  served_by?: string | null
+  /** who took payment or closed the bill */
+  cashier?: string | null
+  items: { item_name: string; qty: number; rate: number; amount: number }[]
+  subtotal: number
+  discount_amount: number
+  taxable: number
+  gst_rate: number
+  cgst: number
+  sgst: number
+  /** The tax named and split the country's way (CGST+SGST, or one VAT). */
+  tax_label?: string
+  tax_parts?: { label: string; rate: number; amount: number }[]
+  /** ZATCA QR + Arabic title where the country requires them. */
+  statutory?: { title: string; title_ar: string; qr_image: string; icv: number } | null
+  grand_total: number
+  paid: number
+  payment_mode: string | null
+  nc: number
+  nc_authorized_by: string | null
+  nc_note: string | null
+}
+
+export function billHtml(b: BillData) {
+  const when = new Date().toLocaleString(uiDateLocale(moneyLocale()), {
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+  })
+  const label = b.table_no ? translate("Table {n}", { n: String(b.table_no) })
+    : b.room_no ? translate("Room {n}", { n: String(b.room_no) }) : translate(b.order_type || "Counter")
+  const rows = b.items.map((it) =>
+    `<tr><td>${esc(it.item_name)}</td>` +
+    `<td class="num" style="width:28px">${Math.round(it.qty)}</td>` +
+    `<td class="num" style="width:52px">${inr(it.rate)}</td>` +
+    `<td class="num" style="width:62px">${inr(it.amount)}</td></tr>`).join("")
+  const money = (l: string, v: number, cls = "") =>
+    `<div class="row ${cls}"><span>${l}</span><span class="num">${cur()}${inr(v)}</span></div>`
+  return `
+    <div class="c b lg">${esc(b.property_name)}</div>
+    <div class="c">${esc(b.outlet_name)}</div>
+    ${b.statutory ? `<div class="c b sm">${esc(b.statutory.title)}</div>` +
+      `<div class="c b sm" dir="rtl">${esc(b.statutory.title_ar)}</div>` : ""}
+    <div class="rule"></div>
+    <div class="row"><span class="b">${esc(label)}</span><span>${when}</span></div>
+    <div class="row sm"><span>${esc(translate("Bill:"))} ${esc(b.order)}</span><span>${esc(translate("KOT #{number}", { number: String(b.kot_no ?? "-") }))}</span></div>
+    ${b.customer_name || b.customer_phone
+      ? `<div class="sm">${esc([b.customer_name, b.customer_phone].filter(Boolean).join(" · "))}</div>` : ""}
+    ${b.delivery_address ? `<div class="sm">→ ${esc(b.delivery_address)}</div>` : ""}
+    <div class="rule"></div>
+    <table>
+      <tr class="sm"><td>${esc(translate("Item"))}</td><td class="num">${esc(translate("Qty"))}</td><td class="num">${esc(translate("Rate"))}</td><td class="num">${esc(translate("Amt"))}</td></tr>
+      ${rows}
+    </table>
+    <div class="rule"></div>
+    ${money(esc(translate("Subtotal")), b.subtotal)}
+    ${b.discount_amount ? money(esc(translate("Discount")), -b.discount_amount) : ""}
+    ${(b.tax_parts ?? [
+      { label: "CGST", rate: b.gst_rate / 2, amount: b.cgst },
+      { label: "SGST", rate: b.gst_rate / 2, amount: b.sgst },
+    ]).map((p) => money(`${esc(p.label)} @ ${p.rate}%`, p.amount, "sm")).join("")}
+    <div class="rule"></div>
+    ${money(esc(translate("TOTAL")), b.grand_total, "b lg")}
+    ${b.nc ? `<div class="c b" style="margin-top:4px">${esc(translate("COMPLIMENTARY - NO CHARGE"))}</div>` +
+      `<div class="c sm">${esc(translate("auth:"))} ${esc(b.nc_authorized_by || "-")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
+    ${b.paid ? `<div class="c b" style="margin-top:4px">${esc(translate("PAID"))} · ${esc(translate(b.payment_mode))}</div>` : ""}
+    ${b.served_by ? `<div class="sm">${esc(translate("Served by: {name}", { name: b.served_by }))}</div>` : ""}
+    ${b.cashier ? `<div class="sm">${esc(translate("Cashier: {name}", { name: b.cashier }))}</div>` : ""}
+    <div class="rule"></div>
+    ${b.statutory ? `<div class="c"><img src="${b.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div>` +
+      `<div class="c sm">ICV ${b.statutory.icv}</div>` : ""}
+    <div class="c sm">${esc(translate("Thank you. See you again."))}</div>
+    <div class="cut">${esc(translate("- cut -"))}</div>`
+}

@@ -1,0 +1,21 @@
+{
+ "app": "kamra",
+ "bg_color": "gray",
+ "creation": "2026-10-23 16:05:29.784815",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 0,
+ "label": "Hotel",
+ "link_to": "Hotel",
+ "link_type": "Workspace Sidebar",
+ "logo_url": "/assets/kamra/hotel-app-icon.svg",
+ "modified": "2026-10-30 17:24:11.274559",
+ "modified_by": "Administrator",
+ "name": "Kamra",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}

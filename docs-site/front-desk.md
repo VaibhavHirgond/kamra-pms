@@ -1,0 +1,594 @@
+# Front desk - arrivals, check-in and check-out
+
+The Front Desk app is where the desk runs the day: who is arriving, who is
+leaving, who is in which room, and the paperwork in between. Front Desk,
+Night Auditor and Hotel Admin users see it. Making bookings is covered in
+[Reservations](/reservations).
+
+![The Today screen: counts for arrivals, departures, in-house, occupancy, revenue and open tasks; the arrivals and departures lists on the left; the room board by floor on the right](/img/front-desk/today.png)
+
+## Before you start
+
+1. **Set your check-in and check-out times.** **Settings → Stay policies →
+   Check-in & check-out**. They print on the registration card and on the
+   guest's online check-in page.
+2. **Decide how self check-in links go out.** **Settings → Front Desk →
+   Arrivals**. Leave **Send pre-check-in links automatically** off to copy
+   each link by hand, or turn it on to send them every morning (see
+   [Send the self check-in link](#send-the-self-check-in-link)).
+3. **Open your till before you take money.** A walk-in that pays at the
+   desk, or a deposit, goes through your cashier session: **Finance →
+   Cashier → My Till**. See [Billing](/billing).
+
+## Read the Today screen
+
+**Front Desk → Today** is the home screen. It refreshes itself every 30
+seconds.
+
+- The six counts across the top: **Arrivals**, **Departures**,
+  **In-house**, **Occupancy**, **Revenue** (with RevPAR) and **Open tasks**
+  for housekeeping. Each one opens what is behind it: the first three open
+  [In House](#see-everyone-in-house) on that tab, Occupancy the room
+  board, Revenue the Revenue dashboard, Open tasks housekeeping.
+- Under them, the money row: **Collected today**, **Outstanding**, **Open
+  folios** and month-to-date **ADR**, **RevPAR** and **Occupancy**, each a
+  link to the till board, ledgers, billing or the report.
+- **Occupancy** is rooms occupied now over the rooms you can sell (out of
+  order rooms left out). Under the cards, **Occupancy on the books, next
+  90 days** shows one cell a night, darker when fuller, with the 30, 60
+  and 90 day averages. Rooms **held for groups** (a group block's rooms
+  not yet named into reservations) sit on top of the booked rooms in a
+  lighter shade; once the block's cutoff passes they are released and
+  drop off. Hover a cell for the rooms booked and held that night and the
+  occupancy without and with holds, or open **By week** for a table with
+  a held column. Check it before taking a large booking.
+- Revenue and the money row are for Finance, Revenue, the night auditor
+  and managers. A receptionist sees **Arrivals**, **Departures**,
+  **In-house**, **Occupancy**, the 90-day forecast and **Open tasks**,
+  never revenue, ADR, RevPAR, collections or outstanding. The Revenue
+  dashboard and Manager's flash stay closed to them, and the occupancy
+  report leaves out its money columns for them.
+- **Arrivals** and **Departures** list today's stays. Each row shows the
+  source (Website, Phone, OTA, AI Agent…), a payment chip (**Paid**,
+  **₹… due** or **Unpaid**) and **Pre-checked-in** when the guest has filled
+  in the online form. "via Priya (Assistant)" means someone booked on the
+  guest's behalf; hover it for the booker's phone.
+- **Room board** shows every room by floor. Click an occupied room (dark
+  green) for a menu: **Check out**, **Folio and billing**, **Guest
+  requests**, **Registration card** or **Room details**. A room whose guest
+  arrives today shows **Arriving**; click it for **Check in**. Click any
+  other room to move its housekeeping status on one step: Dirty → Clean →
+  Inspected → Out of Order → Dirty. **Open full view** opens the
+  [Rooms](/rooms) screen.
+- **In-house guests** lists everyone staying, their balance and when they
+  leave. Click a row for the registration card.
+
+![The arrivals list: each guest with source and payment chips, the room, nights and party size, the GRC and copy check-in link shortcuts, and a Check in button](/img/front-desk/arrivals.png)
+
+## See everyone in house
+
+**Front Desk → In House** puts the day's guests in one list, with three
+tabs: **Arrivals**, **In house** and **Departures**, each with its count.
+Step the date with the arrows (click the date to come back to today). A
+row opens the stay; the buttons on it check in today's arrivals, check out,
+or open the folio. **View all** on Today's lists opens the same page.
+
+![In House: the Arrivals, In house and Departures tabs with counts, and the guests in a table with their room, stay, source, amount due and actions](/img/front-desk/in-house.png)
+
+## Choose what Today shows
+
+Each person can pick which panels Today shows and in what order. Click
+**Customize** (next to the date).
+
+1. Tap a panel to show or hide it: **Key numbers**, **Booking requests**,
+   **Arrivals**, **Departures**, **Room board**, **In-house guests**,
+   **Housekeeping** and **Open tasks** (rooms with housekeeping work still
+   open, and who has it).
+2. Use the up and down arrows to change the order, and the two-way arrow to
+   move a panel between the narrow and the wide column.
+3. Click **Save for me**. Your layout is saved on the server, so it follows
+   you to any computer or tablet you sign in on.
+
+**Use the hotel default** drops your own layout. A Hotel Admin also sees
+**Hotel default**: **Make this the hotel default** sets what everyone at the
+hotel sees until they customise their own Today, and **Reset the hotel
+default** goes back to the standard layout. If nobody customises anything,
+Today looks the way it always has (Open tasks starts hidden).
+
+## Check a guest in
+
+Check-in is a short list of steps, one screen each, in the order your
+property set. The same steps open from every **Check in** button: the
+arrival on **Today**, the booking under **Reservations**, a stay on the
+**Tape Chart**, an arrival in **End of Day**, and a walk-in.
+
+1. On **Today**, find the guest under **Arrivals** and click **Check in**.
+2. Work through the steps at the top of the panel. Each step says what to
+   do. A **Required** step has no **Skip** button. An **Optional** step
+   does.
+3. Click **Done, continue** when a step is finished. Kamra checks it: for
+   example, it will not move on from **Guest and IDs** while an ID is
+   still missing.
+4. On the last screen, read the summary and click **Check in to room 205**
+   (the button names the room). A red step in the summary is required and
+   not done yet: click **Go to step** to finish it.
+
+![The check-in panel for Nikhil Rao: the steps along the top, open on Guest and IDs](/img/front-desk/checkin-sheet.png)
+
+The room turns occupied, the guest folio opens, and any deposit taken
+before arrival moves onto the stay's bill. The last screen links to the
+registration card to print.
+
+### The steps
+
+| Step | What you do | Required by default |
+| --- | --- | --- |
+| **Guest and IDs** | Check the name and phone, then the ID for the guest and everyone staying. You get one card per person on the booking (adults plus children): take each person's **Photo**, an **ID picture**, and the ID details, or press **Scan ID** to fill them from a scanner. Every adult needs an ID; a child only where your country's register asks for it. If the guest checked in online you see **Done online**: check what they sent against the person. | Yes |
+| **Who pays** | Pick who pays: the OTA (already paid, or guest pays here), the guest, the company, or the group. You see the stay total, what is paid and what is left. | Yes |
+| **Room** | Keep the assigned room, or pick a free room of the booked type. Clean rooms come first. **Upgrade or another type** shows the new price before you confirm. | Always |
+| **Deposit and advance** | Take the security deposit, or waive it with a reason, and any advance still owed. Shown only when your property asks for a deposit or the booking owes an advance. | Yes |
+| **Registration card** | Open the card to show or print. The guest signs on the screen, or on the printed card. | Yes in India, optional elsewhere |
+| **Keys** | Note how many keys you gave and, if you like, the card numbers. | No |
+| **Wi-Fi and stay info** | Tell the guest the Wi-Fi, breakfast and check-out times. **Print** it or **Send on WhatsApp**. Shown once you fill in **Settings → Front Desk → Guest info at check-in**. | No |
+| **Anything needed?** | Tap what the guest asks for: extra bed, wake-up call, airport drop, dietary needs, special occasion. Each one becomes a task for the right team. | No |
+| **Charges to the room** | Allow or block charges to the room. Blocked: the restaurant, laundry and minibar cannot put anything on this room, and the guest pays at the outlet. For an OTA prepaid stay with nothing held for extras, Kamra suggests blocking. | Yes |
+
+Kamra records who did each step and when. The booking shows who assigned
+the room, who gave the keys and who checked the guest in, and every step
+is in the **Activity Log**.
+
+### Choose which steps are required
+
+**Settings → Front Desk → Check-in steps** (Hotel Admin). Tick
+**Required** for each step your staff must never skip. **Room** is always
+required. A required step cannot be skipped at the desk, and Kamra will not
+check the guest in until it is done, whoever asks: the desk, the API or an
+AI agent.
+
+### Small things at the desk
+
+- **Expected arrivals over several days:** on **In House**, the Arrivals tab
+  has an **Until** date: pick up to two weeks ahead to see everyone due.
+- **Market segment:** a booking can carry its segment (Corporate, Leisure,
+  Group, MICE, Government, Wedding, Long Stay, Airline Crew, Complimentary,
+  House Use). A company booking is Corporate unless you pick another.
+- **Requests with a price:** at check-in, an extra bed, an airport drop or
+  a special occasion can take a price; it goes on the guest's bill (an
+  airport drop as **Taxi**). A wake-up call or dietary note is never charged.
+- **Room change** shows the room type the guest is in now and the one they
+  move to.
+- **Folio:** when the guest has paid more than has been charged so far, the
+  folio shows it as **Advance**, not as a negative balance.
+- **Reservation numbers** restart each financial year: in India in April
+  (RES-2026-… runs April 2026 to March 2027), elsewhere in January.
+
+### Scan an ID
+
+**Scan ID** fills the guest's details from the ID itself, so nobody types
+a passport number.
+
+- **Passport or ID card**: the two or three lines of letters and `<` at the
+  bottom of the photo page. Kamra checks the check digits, so a misread
+  line is refused instead of saved wrong.
+- **Aadhaar** (Indian properties): the QR code on the card or the e-Aadhaar
+  print. Only the last 4 digits of the Aadhaar number are kept.
+
+Any USB or Bluetooth scanner that works in **keyboard mode** (most 2D
+barcode scanners, and passport readers with a keyboard setting) works
+with no driver: press **Scan ID**, then scan. On a tablet or Mac, **Use
+camera** reads the QR with the camera instead. Always compare what was
+read with the person at the desk, and still take the **ID picture** where
+your register needs a copy.
+
+### Check in a whole group
+
+Open the group under **Front Desk → Group Booking**. Under **What to do
+next**, press **Check in all**, or on the **Guests** tab press **Check in**
+with no rooms ticked (tick rooms to check in only those), and confirm. Every room arriving today goes in at
+once; a room not given yet gets a free room of the booked type. If no
+room is free for someone, they are listed and the rest still go in.
+
+IDs, deposits and the registration card can then be finished room by room
+with **Finish** on each row, while the group is already on its way up.
+
+## Check in a walk-in
+
+For a guest standing at the counter with no booking, use **Walk-in** in
+the top bar. One screen books the stay, records the ID, assigns the room
+and takes the payment. The check-in steps open right after.
+
+1. Click **Walk-in** (or switch **New booking** to **Walk-in**).
+2. Type the **Guest name**. If the guest has stayed before, pick them from
+   the list so the stay joins their profile. Add the **Phone**.
+3. Choose the **ID type**, type the **ID number** and check the
+   **Nationality**. The ID types come from your country pack.
+4. Pick the **Room type**, then the **Room**. The list shows rooms free
+   tonight, clean ones first.
+5. Set **Nights** and the party size. For a few hours' stay, switch
+   **Overnight** to **Day use** and set the time slot.
+6. Under **Payment**, pick how the guest pays and the **Amount collected**.
+   It starts at the full total; lower it for a part payment, or set it to 0
+   to put everything on the bill.
+7. Click **Collect ₹2,940 and continue to check-in** (or **Continue to
+   check-in** when nothing is collected).
+8. The check-in steps open. **Who pays**, the **Room** and the ID you typed
+   are already done; finish the rest and click **Check in to room 105**.
+
+![The walk-in screen filled in: guest, phone, Aadhaar ID, Deluxe room 205, one night, and the live quote with Continue to check-in on the right](/img/front-desk/walkin.png)
+
+If the room was just taken, or your till is closed, nothing is saved and
+the screen tells you why. If you close the check-in steps before the end,
+the booking stays booked with its room: click **Finish check-in**, or check
+the guest in from **Today**.
+
+## Send the self check-in link
+
+Guests can fill in their registration before they arrive: ID type and
+number, a photo of the ID, address, arrival time, and a signature on the
+registration card.
+
+- **By hand:** on **Today**, click **copy check-in link** on the arrival
+  row and paste it into your message to the guest. Hover the link first:
+  it tells you whether to send it to the guest, the booker, or both. The
+  link shows for confirmed arrivals that have not filled the form yet.
+- **Automatically:** turn on **Settings → Front Desk → Arrivals → Send
+  pre-check-in links automatically**. Each morning Kamra sends the link to
+  guests arriving within **Send links this far ahead** (2 days by default).
+
+![The guest's online check-in page on a phone: stay summary, ID type and number, ID photo, address proof, contact details, house rules and a signature box](/img/front-desk/precheckin.png)
+
+When the guest submits the form, the arrival shows **Pre-checked-in**.
+Before you hand over the key, compare the ID with the person: open the
+booking (**Reservations** → click it) and click **Verify identity** in the
+**Identity** card. After that, the guest can no longer change what they
+sent.
+
+## Complete the registration card
+
+Every stay has a printable guest registration card (GRC). Open it from
+**GRC** on an arrival row, from a room on the room board, from an
+in-house guest, or with **Registration card** on the booking.
+
+![The registration card for Priya Nair: guest and stay details on the printable card, and the registration checklist, documents and money on the right](/img/front-desk/grc.png)
+
+1. Work down the **Registration checklist** on the right: **Guest ID on
+   file**, **Address proof** (optional), **Occupants registered** and
+   **Signature**.
+2. Under **Documents**, click **Capture** next to **Guest ID** or
+   **Address proof**. On a tablet or phone this opens the camera.
+3. To correct the guest's nationality, click **edit** next to
+   **Nationality**.
+4. If the guest arrived or left at a different time than planned, click
+   **edit** next to **Actual check-in** or **Actual check-out**.
+5. Below the card, fill the **Occupant register**: one row per person in
+   the room, with their own ID. Click **Add occupant** for more rows, then
+   **Save register**. Once a row is saved, **Capture ID** on that row takes
+   the occupant's ID. A child's row asks for name and age only, unless your
+   country's register needs children's IDs too.
+
+   Guests sharing a room don't always arrive together. Each row has its
+   own **Arrived** time: at check-in everyone already on the register gets
+   the check-in time, and a guest added while the stay is in house gets
+   the time they were saved. Correct it in the row, or press **Arrived
+   now**. When one guest leaves before the others, set **Left** (or
+   **Left now**). The GRC prints each guest's arrival, and the booking's
+   **Stay** card lists who is in the room.
+6. Click **Print GRC** and have the guest sign. A guest who signed online
+   already has their signature on the card.
+
+![The occupant register: full name, age, gender, nationality, ID type and number for each person, with Add occupant and Save register](/img/front-desk/grc-occupants.png)
+
+The **Money** box shows charges, payments and the balance; **Open bill**
+goes to the folio.
+
+## Move a guest to another room
+
+1. Open the move from any of these:
+   - **Change room** on the registration card,
+   - **Change room** (or **Assign room**) in the booking's **Room** card,
+   - the guest's bar on the [tape chart](/reservations#move-a-stay-on-the-tape-chart).
+2. Pick a room. **Same type** lists rooms of the booked type; **All types
+   (upgrade)** shows every type. Free, clean rooms come first; booked rooms
+   are greyed out.
+3. Moving to another room type, choose the price under **Rate**:
+   - **New room's rate**: the stay is priced as the new type.
+   - **Keep current price**: the guest keeps the rate they booked, for
+     example for a free upgrade.
+   - **Enter a rate**: type a nightly rate agreed with the guest. Only
+     Revenue Manager and Hotel Admin see this option.
+
+   The price line at the bottom shows the difference and the new total
+   before anything changes. The folio bills the price you chose.
+4. Pick a reason (**Guest request**, **Upgrade**, **Maintenance**, **Noise
+   / complaint**, **Other**), add a note if you like, and click **Move to
+   303**.
+
+![The Change room window with All types (upgrade) selected, room 303 picked, and the price line showing what the Suite adds to the stay](/img/front-desk/change-room.png)
+
+When the guest is already in-house, the old room is marked Dirty for
+housekeeping. Every move is written to the activity log with its reason.
+
+## Check a guest out
+
+Check-out is a short guided sheet. Open it from any of these:
+
+- **Today → Departures**: **Check out** on the guest's row.
+- **Today → Rooms**: tap an occupied room, then **Check out**.
+- **Tape chart**: click the stay, then **Check out**.
+- The booking's detail panel: **Check out**.
+- The command palette (Ctrl+K or Cmd+K): type **check out** and the room
+  number or the guest's name.
+
+![The departures list with a Check out button on each row](/img/front-desk/departures.png)
+
+The sheet shows only the steps this stay needs, in this order. A guest
+leaving before the booked date starts with **Leaving early**:
+
+0. **Leaving early.** Shows how many booked nights the guest won't use
+   and what your **Early departure charge** makes of them: **No charge**,
+   **One night** or **All unused nights**, each with its amount (room rate
+   of those nights). Type the reason and press **Shorten the stay**. The
+   stay now ends today, through the same path as changing dates on the
+   booking, so the room goes back on sale, the channel manager is told and
+   the price is worked out again for the nights stayed; check-out then
+   bills only those nights, plus an **Early departure** line for the
+   charge, on the bill that pays the room (the company's, when it pays
+   the room). Each unused night is taxed as its room charge would have
+   been, so nights in different tax slabs get one line per rate. The line
+   is its own charge type, **Early Departure** (transaction code 1220,
+   revenue group Other): it shows as other income on the flash and day
+   reports, never as a room night, so occupancy, ADR and RevPAR count only
+   the nights the guest stayed. Finance and Hotel Admins can pick a different charge for this
+   stay; everyone else gets the property's policy. The booked date and the
+   reason stay on the booking and show in the **Early departures** report.
+   With the policy at **All unused nights** you can **Skip** the step and
+   every booked night stays on the bill, as before; with any other policy
+   the stay must be shortened before check-out.
+
+![The check-out sheet on the Bill step: the amount to collect, who pays, the stay summary and the charges by type](/img/front-desk/checkout-sheet.png)
+
+1. **Bill.** Every folio of the stay with its lines, as it will stand at
+   check-out: nights the night audit has not posted yet are counted in.
+   Restaurant or room-service orders and laundry that are not on the folio
+   yet are listed here, each with a line on what to do:
+   - a restaurant bill: **Post to room** adds it to the bill; **Settle
+     separately** takes payment for it at the outlet instead.
+   - laundry still at the laundry (Collected or In Process) can't be billed
+     yet. When the bag is back at the desk, press **Bag is back: mark
+     ready**, then **Hand back and post to room**.
+   - laundry that is Ready: **Hand back and post to room** marks every
+     piece returned and adds it to the bill.
+
+   Open bills never stop the check-out. If one is still open at the
+   **Check out** step, the sheet lists it under **Still not on the bill**:
+   posted later, it lands on the departed stay's folio and has to be
+   collected separately. Moving laundry along is for Front Desk and
+   Housekeeping; a role that can't do it is told who can.
+2. **Late check-out.** Only when the guest leaves after your check-out
+   time. Enter the fee your hotel charges and press **Add late check-out
+   fee**, or **Skip** to waive it. Kamra never suggests an amount.
+3. **Company bill.** Only when a company with credit pays part of the
+   stay. It shows which folio moves to the company's account (the city
+   ledger) and the company's credit check. Tick the box once the guest
+   agrees. If the company's credit is blocked, Finance or a Hotel Admin
+   can type a reason to override it; the reason is logged with their name.
+   If the company changed, press **Change company** here (or under **Who
+   pays** on the first step); see
+   [Bill a company](/billing#bill-a-company).
+4. **Payment.** Only when money is still owed either way.
+   - The guest owes money: pick the payment mode, add a reference if you
+     like, and press **Collect**.
+   - The guest paid too much: Kamra shows where the money comes from (a
+     held security deposit, or a payment above the bill) and the mode it
+     goes back by (the mode it came in by). Keep or change the reason and
+     press **Refund**. A security deposit goes back through the deposit's
+     own refund, so the deposit record and its ledger are released.
+   - Damage to the room? **Withhold for damage** keeps part of the
+     deposit first.
+
+   Money goes through your till. If it is closed, the sheet shows **Your
+   till is closed**: count the cash in the drawer, enter it as the
+   **Opening float** (0 if it is empty) and press **Open my till**. You
+   stay in the sheet. Front Desk, Finance and Hotel Admins can open their
+   own till; you close it at the end of your shift under **Finance →
+   Cashier**. The cashier PIN is asked when your hotel requires it.
+5. **Guest moment.** Your hotel's check-out routine (ask for feedback, say
+   goodbye). Tick each one, or **Skip**.
+6. **Check out.** Press **Check out**. Front Desk and Hotel Admins can
+   check a guest out. Finance can settle the bill in this sheet, but the
+   **Check out** button stays off for them and says who can press it.
+7. **Invoice.** Press **Close and generate invoice** for each folio (or
+   **Generate all invoices**), then **View or print**. The invoice comes
+   after check-out on purpose: check-out may still post the last night and
+   move the company's share, and a folio invoiced before that is frozen.
+   Issuing an invoice also needs your till open; the same **Open my till**
+   card shows here when it is closed.
+
+If anything stops a step, the reason shows inside the sheet next to that
+step, with what to do about it (open the till, open the folio). A failed
+step changes nothing, and the sheet reloads the bill after every action.
+
+For a group, the sheet checks out one room at a time and lists the other
+guests of the group who are still in house, each with its own **Check
+out**.
+
+After check-out the room is marked Vacant and Dirty, and housekeeping gets
+a high-priority checkout clean. Every step (payment, refund, check-out,
+invoice) is written to the activity log with the name of the person who
+did it.
+
+### Undo a checkout
+
+Checked out the wrong room, or the guest is staying after all? Open the
+stay and press **Undo checkout**, then say why. The guest is in house
+again in the same room:
+
+- the invoice made at checkout is cancelled and kept in the cancelled
+  invoice register (where the country needs it, a credit note is issued);
+  the next checkout gets a new number
+- a bill that went to the company's account comes off it
+- the room is occupied again and the checkout clean is dropped
+
+It works until the night audit runs. It is refused if someone else is in
+the room, or if the company has already paid part of the bill; Finance
+corrects those on the account.
+
+## Look up a guest
+
+**Front Desk → Guest History** lists every guest with their bookings, stays,
+nights, lifetime value and last stay. Search by name or phone, and click a
+guest to open their journey.
+
+- **Columns** picks which columns show. Your choice is kept in this
+  browser.
+- **Export** downloads the list as a CSV file with the columns you see.
+  The list shows up to 200 guests, so search first for a longer list.
+
+![Guest History: each guest with phone, bookings, stays, nights, lifetime value and last stay](/img/front-desk/guests.png)
+
+The journey shows every stay and event, with:
+
+- **Book a stay** to start a booking already attached to this guest,
+- **Notes & preferences** and the **VIP** tick (VIP guests get a star on
+  every screen),
+- **Profile actions**: **Blacklist guest**, **Merge a duplicate**,
+  **Anonymize profile** and **Export guest data**.
+
+![A guest's journey: stay history, totals, notes and preferences, VIP, and profile actions](/img/front-desk/guest-journey.png)
+
+## Change the rate of a guest in house
+
+Extending a stay can change its rate: five nights may reach a long-stay
+discount that four nights did not. Kamra never re-prices a night already
+charged to the folio. Your property's rate-change setting decides what
+happens to those nights:
+
+- **Keep charged nights** (default): charged nights keep their rate; only
+  the nights still to come take the new rate. The booking total and the
+  folio stay equal. When you change the dates on the tape chart, the price
+  line says how much the guest would have saved on the charged nights; you
+  can give it back with an [allowance](/billing#correct-a-charge) and a
+  reason.
+- **Credit the difference**: when the new rate is lower, Kamra posts a
+  **Rate Adjustment** credit for each charged night, dated today, on the
+  folio the night went to. The credit is taxed at the night's original
+  rate, even when the lower rate would fall in a lower tax slab: it
+  corrects the original supply. A higher rate is never added to a charged
+  night. Rate adjustments count as room revenue (ADR, RevPAR, flash) but
+  not as rooms sold.
+- **Correct back-dated rates**: dates change as with Keep. Finance or a
+  Hotel Admin can then correct the charged nights from the folio, see
+  [Correct charged nights](/billing#correct-charged-nights).
+
+## Settings
+
+| Setting | Where | Default | What it does |
+| --- | --- | --- | --- |
+| Check-in time / Check-out time | Settings → Stay policies | 14:00 / 11:00 | Printed on the GRC and the online check-in page. |
+| Send pre-check-in links automatically | Settings → Front Desk → Arrivals | Off | Sends the self check-in link to upcoming arrivals each morning. |
+| Send links this far ahead | Settings → Front Desk → Arrivals | 2 days | How far ahead of arrival the automatic link goes out. |
+| Require pre-check-in before access details | Settings → Front Desk → Arrivals | Off | Holds back the **Access instructions** (door codes, Wi-Fi) until the guest has checked in online. |
+| Guest ID retention | Settings → Privacy & data | Verify & Discard | Verify & Discard masks ID numbers to the last 4 digits and deletes ID photos at check-out. Store keeps them. |
+| When a stay's rate changes after nights are charged | Settings → Stay policies → Rate changes in house | Keep charged nights | See [Change the rate of a guest in house](#change-the-rate-of-a-guest-in-house). |
+| Security deposit | Settings → Stay policies → Deposits | 0 | A refundable amount to hold during the stay. When set, check-in has a **Deposit and advance** step. While it is held, the booking warns you before check-out. |
+| Check-in steps | Settings → Front Desk → Check-in steps | See [The steps](#the-steps) | Which check-in steps are required. Required steps cannot be skipped and block the check-in until done. |
+| Early departure charge | Settings → Stay policies → Cancellation & no-show | All Nights | What a guest leaving before the booked date pays for the unused nights: None, One Night or All Nights (room rate). Finance or a Hotel Admin can change it for one stay, with a reason. |
+| WhatsApp the guest when a charge is posted to the room | Settings → Front Desk → Guest alerts | Off | Sends the room charge template (see [WhatsApp](/whatsapp)) when a restaurant, laundry, minibar or desk charge reaches an in-house guest's bill. |
+| Wi-Fi name, Wi-Fi password, Breakfast times, Emergency number, Anything else for guests | Settings → Front Desk → Guest info at check-in | Empty | Shown in the **Wi-Fi and stay info** step, to tell, print or send on WhatsApp. The password is never written to the activity log. |
+
+## Good to know
+
+- Check-in waits for the steps your property marks **Required**. With the
+  defaults, that includes the ID for the guest and everyone staying.
+- A walk-in always arrives today. For a future date, make a normal
+  booking.
+- A booking needs a room before check-in. Whole-villa stays check in as
+  one unit.
+- The balance on **Today** includes nights the night audit has not posted
+  yet, so it matches what the guest owes at check-out.
+- A room whose guest is due out today but still checked in is not offered
+  for a check-in or a walk-in until that guest checks out.
+- **Blacklist guest** is for Hotel Admins. A reason is needed both to add
+  and to lift it, and it goes to the activity log.
+
+## Troubleshooting
+
+**"Cannot check out: … is still owed."** Use the **Check out** button:
+its **Payment** step collects the amount. For a company that pays later,
+transfer the balance to the city ledger on the folio.
+
+**"Invoice … is issued, its charges are frozen"** at check-out. The folio
+was invoiced before every night was posted. The check-out sheet says so on
+its first step: open the folio, cancel the invoice, then check out. The
+sheet issues the invoice for you afterwards.
+
+**"Finish these check-in steps first: …"** A required step is not done.
+Open the check-in from **Today** and finish the steps the message names.
+To change which steps are required, see
+[Choose which steps are required](#choose-which-steps-are-required).
+
+**"… is required at this property and cannot be skipped."** Only optional
+steps have **Skip**. Do the step, or ask a Hotel Admin to make it optional.
+
+**"Room 204 cannot take charges to the room (set at check-in)."** The desk
+blocked charges to the room. Take payment at the outlet, or open the
+booking's check-in steps and allow charges in **Charges to the room**.
+
+**"Assign a room before check-in."** The booking has no room. Use **Assign
+room** on the booking or the GRC, or check in from **Today**, where you pick
+the room in the same step.
+
+**"NO_OPEN_SESSION: open your till under Finance → Cashier first."** You
+tried to take money without an open till. The check-in, walk-in and
+check-out sheets show **Your till is closed** with an **Open my till**
+button in place: enter the opening float and press it. You can also open
+it under **Finance → Cashier → My Till**, or set a walk-in's **Amount
+collected** to 0. A small place with no cash drawer can turn tills off:
+**Settings → Finance → Cashier controls → Take money through cashier
+tills**. Payments and refunds are then recorded without a till; paid-outs,
+cash drops, petty cash and currency exchange still need one.
+
+**The Collect, Refund or Continue button is greyed out.** The reason is
+written next to it: open your till, tick the company confirmation, write
+an override reason, or take (or waive) the deposit.
+
+**"Your role can't open a till."** Your role (for example Housekeeping or
+Revenue) does not take money. Ask Front Desk, Finance or a Hotel Admin.
+
+**"Checking a guest in is for Front Desk or a Hotel Admin."** Finance and
+other roles can see an arrival but not check it in.
+
+**A laundry bag shows "Still at the laundry".** It can't be billed until it
+is back. Press **Bag is back: mark ready** when it is at the desk, then
+**Hand back and post to room**. If the guest leaves first, check out
+anyway: post the bag later from **Laundry** and collect it separately.
+
+**"Room … is still occupied by … Check them out first, or choose another
+room."** The guest before is still checked in to that room. Check them out
+on **Today** (under **Departures**), or pick another room.
+
+**The check-in panel says "No free room of this type for these dates".**
+Every room of the type is taken. Open the [tape chart](/reservations#move-a-stay-on-the-tape-chart)
+to move another stay or upgrade this one.
+
+## For developers
+
+The check-in steps are `kamra.checkin.checkin_flow` and one endpoint per
+step (`save_guest_details`, `confirm_billing`, `assign_checkin_room`,
+`sign_registration_card`, `issue_keys`, `log_checkin_requests`,
+`set_room_charges`, `complete_checkin_step`, `skip_checkin_step`), then
+`kamra.api.check_in`, which refuses while a required step is open
+(`kamra.checkin.check_in_readiness` lists what is missing). The steps and
+which are required live in the property's check-in SOP (`kamra.sop`). The
+walk-in is `kamra.api.walk_in` (`defer_check_in=1` books and hands over to
+the steps); check-out is `kamra.api.check_out` (with `early_reason` /
+`early_fee` it shortens an early departure first); the early departure
+on its own is `kamra.api.early_departure` and its plan is
+`early_departure` in `kamra.api.checkout_context`; room
+moves use `kamra.api.movable_rooms`, `kamra.api.room_move_preview` and
+`kamra.api.move_reservation`. The Today layout is
+`kamra.today_layout.get_today_layout`, `save_today_layout`,
+`reset_today_layout` and `save_today_layout_default` (Hotel Admin). AI agents use the `front_desk_today`,
+`check_in_readiness`, `check_in`, `check_out`, `early_departure`, `move_room`, `guest_lookup`, `guest_journey` and
+`update_occupants` tools. See [MCP tools](/mcp-tools) and the
+[API reference](/api-reference).

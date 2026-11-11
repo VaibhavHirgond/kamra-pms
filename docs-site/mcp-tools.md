@@ -1,0 +1,1503 @@
+# MCP tool reference
+
+Kamra exposes **161 governed tools** on the hosted MCP
+endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
+call runs as the connected user - **role** permissions apply, tools
+are further filtered by the property's **enabled modules**, prices
+come from the pricing engine, and each action is recorded in the
+activity ledger.
+
+This page is generated from `kamra/mcp_tools.py`. Re-run
+`python3 gen_mcp_tools.py` in `docs-site/` when the registry changes.
+
+## Front desk
+
+### `front_desk_today()`
+
+Today's snapshot: arrivals, departures, in-house guests, room board
+and the hours-saved counter.
+
+Endpoint: `kamra.api.front_desk_snapshot`.
+
+### `availability(start_date, days)`
+
+Room availability and nightly rates per room type for the next N
+days. start_date YYYY-MM-DD (default today).
+
+Endpoint: `kamra.api.availability_calendar`.
+
+### `quote(room_type, check_in_date, check_out_date, adults, children, meal_plan, rate_plan, voucher_code, company, check_in_time, check_out_time)`
+
+Price a stay (deterministic: occupancy pricing, seasons, meal plan,
+voucher, GST). Use before every booking. Room type, meal plan and rate
+plan accept the id, code or exact name; an unknown or ambiguous value
+is refused with the valid options. For a same-day stay on an hourly or
+block rate plan, pass check_in_time / check_out_time (HH:MM).
+
+Endpoint: `kamra.api.get_quote`.
+
+### `booking_options()`
+
+Room types, meal plans, rate plans and corporate accounts available
+for booking at this property.
+
+Endpoint: `kamra.api.booking_options`.
+
+### `create_booking(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, meal_plan, rate_plan, voucher_code, company, market_segment, check_in_time, check_out_time, idempotency_key)`
+
+Create a reservation. Dedupes the guest by phone, auto-assigns a
+free room, applies the voucher, prices via the engine. Room type,
+meal plan and rate plan accept the id, code or exact name. Safe to
+retry: a repeated call returns the existing booking (see
+idempotency_key) - check idempotent_replay in the result. Same-day
+dates are day-use; optional check_in_time / check_out_time (HH:MM)
+set the slot and price an hourly or block rate plan.
+
+Endpoint: `kamra.api.create_booking`.
+Mutating - logged to the activity ledger.
+
+### `add_to_waitlist(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, idempotency_key)`
+
+Park a stay on the waitlist (no room) - for dates that are sold out or
+restricted. Promote it later with promote_waitlist when a room frees.
+
+Endpoint: `kamra.api.create_booking`.
+Mutating - logged to the activity ledger.
+
+### `waitlist_ready()`
+
+Waitlisted stays that can NOW be booked - a room has freed up for their
+dates. Each item includes the guest name and phone, so you can proactively
+reach out. Poll this to catch openings the moment they appear - the wedge
+for turning a sold-out 'no' into a booking.
+
+Endpoint: `kamra.api.waitlist_ready`.
+
+### `promote_waitlist(reservation)`
+
+Promote a waitlisted stay into a free room (Confirmed). Fails if no room
+is free for its dates.
+
+Endpoint: `kamra.api.promote_waitlist`.
+Mutating - logged to the activity ledger.
+
+### `cancellation_preview(reservation)`
+
+What cancelling would cost right now (policy window, fee basis,
+estimated fee). ALWAYS read this to the guest before cancelling.
+
+Endpoint: `kamra.api.cancellation_preview`.
+
+### `cancel_booking(reservation, reason, note, waive_fee)`
+
+Cancel a confirmed booking. The property's cancellation policy
+applies automatically - free outside the window, else the configured
+fee posts to the folio. Returns a cancellation number - always give
+it to the guest. Reasons: Guest request, Change of plans, Duplicate
+booking, Payment failed, Weather / travel disruption, Booked
+elsewhere, Other. Only waive the fee when a manager authorizes it;
+the waiver is logged.
+
+Endpoint: `kamra.api.cancel_reservation`.
+Mutating - logged to the activity ledger.
+
+### `quote_itinerary(legs, adults, children, company)`
+
+Price a trip across several properties of the chain (e.g. 2 nights
+at one hotel, then 3 at another) before booking it: each leg priced by
+the same engine as quote, rooms free per leg, and the combined total
+(null when legs are in different currencies). Legs can't overlap; a
+leg may start the day the previous one ends.
+
+Endpoint: `kamra.crs.quote_itinerary`.
+
+### `create_itinerary(legs, guest_name, phone, adults, children, company, booked_by_name, booked_by_phone, notes, idempotency_key)`
+
+Book a multi-property trip in one call: one normal reservation per
+leg (each with its own folio and its own property's cancellation
+policy) under one itinerary reference (ITN-...) to give the guest.
+All legs book or none do. Always quote_itinerary first. Take the
+advance per leg, or once for the trip with record_trip_advance.
+
+Endpoint: `kamra.crs.create_itinerary`.
+Mutating - logged to the activity ledger.
+
+### `get_itinerary(itinerary)`
+
+A trip (ITN-...) with its legs in date order: property, dates,
+status, price, advance %, advance required, paid and still due per
+leg, and the trip totals.
+
+Endpoint: `kamra.crs.get_itinerary`.
+
+### `trip_advance_preview(itinerary, amount)`
+
+How one advance for a whole trip would be split across its legs:
+each leg up to its own advance still due (earliest stay first), any
+rest to the earliest leg up to its bill. Without an amount, the
+trip's advance still due. ALWAYS show this split to the staff
+member before record_trip_advance.
+
+Endpoint: `kamra.crs.trip_advance_preview`.
+
+### `record_trip_advance(itinerary, amount, mode, reference, idempotency_key)`
+
+Take one advance payment for a whole trip. It is split as
+trip_advance_preview shows and each share posts as an Advance on
+that leg's folio at its own property. mode: one of the
+payment modes every leg's property accepts.
+Confirm the amount and the split with staff before calling.
+
+Endpoint: `kamra.crs.record_trip_advance`.
+Mutating - logged to the activity ledger.
+
+### `add_itinerary_leg(itinerary, property, room_type, check_in_date, check_out_date, adults, children)`
+
+Add one more stay to an existing trip. It can't overlap a live leg.
+
+Endpoint: `kamra.crs.add_itinerary_leg`.
+Mutating - logged to the activity ledger.
+
+### `cancel_itinerary_preview(itinerary)`
+
+What cancelling a whole trip would cost now: each leg's own
+cancellation terms and the total fee. ALWAYS read this to the guest
+before cancel_itinerary. To cancel one leg, use cancellation_preview
+and cancel_booking on that leg's reservation.
+
+Endpoint: `kamra.crs.cancel_itinerary_preview`.
+
+### `cancel_itinerary(itinerary, reason, note, waive_fee)`
+
+Cancel every confirmed leg of a trip, each under its own property's
+policy (fees post to that leg's folio). Returns a cancellation number
+per leg. Only waive fees when a manager authorizes it (logged).
+
+Endpoint: `kamra.crs.cancel_itinerary`.
+Mutating - logged to the activity ledger.
+
+### `booking_requests()`
+
+Pending Request-to-Book stays (status Requested) waiting for the
+host, with whether each can be accepted right now (rooms_free,
+blocker). A request holds NO room until it is accepted.
+
+Endpoint: `kamra.booking_requests.booking_requests`.
+
+### `accept_booking_request(reservation, room)`
+
+Accept a Request-to-Book stay: confirms it and takes a room of its
+type (or the room given). Refused when the dates sold out meanwhile,
+the villa/room lockout applies or a group block holds the rooms -
+then decline it or offer other dates.
+
+Endpoint: `kamra.booking_requests.accept_booking_request`.
+Mutating - logged to the activity ledger.
+
+### `decline_booking_request(reservation, reason)`
+
+Decline a Request-to-Book stay. A reason is required and is sent
+to the guest (WhatsApp / email when the property has them set up).
+No cancellation fee - the stay was never confirmed.
+
+Endpoint: `kamra.booking_requests.decline_booking_request`.
+Mutating - logged to the activity ledger.
+
+### `check_in_readiness(reservation)`
+
+Read-only: the property's check-in steps for a stay (ID, who
+pays, room, deposit, registration card, keys...), which are done
+and by whom, and which REQUIRED steps are still open. check_in is
+refused until those are done by the front desk in the guided
+check-in; an agent cannot do or skip them.
+
+Endpoint: `kamra.checkin.check_in_readiness`.
+
+### `check_in(reservation, room)`
+
+Check a guest in (opens their folio, marks the room occupied).
+Refused while a required check-in step is open; call
+check_in_readiness first and tell the desk what is missing.
+
+Endpoint: `kamra.api.check_in`.
+Mutating - logged to the activity ledger.
+
+### `group_check_in(group_booking, reservations)`
+
+Check in every arrival of a group booking due today (or only the
+reservations listed). Rooms still unassigned get the suggested free
+room of the booked type. Returns who went in, who did not and why,
+and how many rooms still have IDs, deposit or the registration card
+to finish. Confirm with the user first.
+
+Endpoint: `kamra.api.group_check_in`.
+Mutating - logged to the activity ledger.
+
+### `check_out(reservation, early_reason, early_fee)`
+
+Check a guest out (posts remaining nights to the folio, frees the
+room, queues housekeeping). Refused while any folio has a balance:
+collect payment or refund first. A corporate stay with credit moves
+to the city ledger automatically, after the property's credit
+control: over the credit limit or with overdue bills it either warns
+(credit_warnings in the result) or is refused with CREDIT_BLOCKED and
+the reason. An agent can never override a credit block - tell the
+user; Finance or a Hotel Admin can override it at the desk. Confirm
+with the user first.
+
+Leaving before the booked date (checkout_context shows
+`early_departure`): call early_departure first so the stay is
+shortened and only the nights stayed are billed, settle, then check
+out. Passing early_reason here does both in one call, but is refused
+as a whole if the new bill is not settled.
+
+Endpoint: `kamra.api.check_out`.
+Mutating - logged to the activity ledger.
+
+### `early_departure(reservation, reason)`
+
+A guest in house leaves before the booked date: shorten the stay to
+today (availability, channel manager and price follow) and post the
+property's early-departure charge for the unused nights (None, One
+Night or All Nights of room rate). Give the guest's reason. An agent
+always applies the property's policy; only Finance or a Hotel Admin
+can change the charge for one stay. checkout_context shows the plan
+and amounts first. Confirm with the user first.
+
+Endpoint: `kamra.api.early_departure`.
+Mutating - logged to the activity ledger.
+
+### `checkout_context(reservation)`
+
+Read-only: what stands between a stay and check-out, without
+changing anything. Balances per folio after the nights check-out would
+still post, totals owed by the guest and owed back to the guest, a
+held security deposit, what moves to the city ledger and its credit
+check, open restaurant orders, each folio's invoice, and `blockers`
+(every reason check_out would refuse). Use it before check_out to tell
+the user what to settle; collecting or refunding money is done at the
+desk.
+
+Endpoint: `kamra.api.checkout_context`.
+
+### `find_reservations(query, status, limit)`
+
+Find reservations by guest name, room number, or reference  -
+optionally filtered by status (Confirmed, Checked In, Checked Out,
+Cancelled, No Show, Waitlisted). Resolve a room or name to a
+reservation before acting.
+
+Endpoint: `kamra.api.find_reservations`.
+
+### `stay_detail(reservation)`
+
+Full detail for one reservation: dates, room, guest + stay history,
+folio balance (paid/due), booker, and which actions are available.
+
+Endpoint: `kamra.api.reservation_detail`.
+
+### `amend_stay_preview(reservation, check_in_date, check_out_date)`
+
+What new dates would do to a stay's bill before anything changes:
+current and new totals, the difference and the new nightly rates,
+priced by the engine. Read-only. Call before amend_stay and tell the
+guest / staff the new price. For a guest in house, charged_nights
+shows what happens to nights already on the folio: kept at their
+charged rate (kept_difference can be given back as an allowance) or
+credited (credit_total).
+
+Endpoint: `kamra.api.amend_stay_preview`.
+
+### `amend_stay(reservation, check_in_date, check_out_date, confirm_price)`
+
+Change a stay's dates (extend/shorten). An auto-priced stay is
+re-quoted and its nightly rates re-locked; when the total changes the
+call is refused unless confirm_price=1, so run amend_stay_preview
+first and confirm the new price with staff. Re-checks room overlaps.
+
+Endpoint: `kamra.api.amend_stay`.
+Mutating - logged to the activity ledger.
+
+### `move_room(reservation, new_room, confirm_price)`
+
+Move a stay to a different room (pre-arrival or mid-stay). Overlap
+guard re-runs; on a checked-in move the old room goes Dirty. A move to
+another room type re-prices an auto-priced stay: check
+room_move_preview and pass confirm_price=1 once the new price is
+agreed. A same-type move keeps the confirmed rates.
+
+Endpoint: `kamra.api.move_reservation`.
+Mutating - logged to the activity ledger.
+
+### `room_move_preview(reservation, new_room)`
+
+What moving a stay to a room would do to the bill: same type keeps
+the price; another type is re-quoted. Read-only.
+
+Endpoint: `kamra.api.room_move_preview`.
+
+### `assign_rooms_preview(date)`
+
+Propose a room for every confirmed arrival on a date (default today)
+that has none yet: a free room of the booked type, ready for the
+guest, matched to their requests and VIP flag, with no two arrivals
+given the same room. Lists arrivals no room can take, and why.
+Read-only: show the plan to the user, then call assign_rooms_apply
+with the pairs they agree to.
+
+Endpoint: `kamra.allocation.suggest_allocation`.
+
+### `assign_rooms_apply(assignments)`
+
+Assign rooms to arrivals: assignments is a list of
+{"reservation": id, "room": room id}, usually from
+assign_rooms_preview after the user agreed. Each pair is checked
+again (the stay still needs a room, the room is of the booked type
+and still free and ready); pairs that fail are returned in skipped
+with the reason, and nothing else is changed. Running it again with
+the same pairs changes nothing.
+
+Endpoint: `kamra.allocation.apply_allocation`.
+Mutating - logged to the activity ledger.
+
+### `set_late_arrival(reservation, late_arrival, eta)`
+
+Flag a confirmed arrival as arriving late (late_arrival=1), with the
+guest's ETA if known, or clear the flag (late_arrival=0). With the
+property's late-arrival protection on, the night audit holds it as
+Due In instead of marking a no-show.
+
+Endpoint: `kamra.api.set_late_arrival`.
+Mutating - logged to the activity ledger.
+
+### `guest_lookup(search)`
+
+Find guests by name or phone, with stay stats and lifetime value.
+
+Endpoint: `kamra.api.guests_with_stats`.
+
+### `guest_journey(guest)`
+
+A guest's full history: profile, stats, chronological timeline.
+Load this before talking to a returning guest.
+
+Endpoint: `kamra.api.guest_journey`.
+
+### `update_occupants(reservation, occupants)`
+
+Record everyone staying in the room (the legal hotel register,
+printed on the GRC). occupants = [{full_name, age, gender,
+nationality, id_type, id_number, phone, arrived_at, left_at}] -
+replaces the list. arrived_at / left_at ("YYYY-MM-DD HH:MM") are
+optional: a guest already on the register keeps their times, and
+one added while the stay is checked in arrived now. Set left_at
+when a guest leaves before the room checks out.
+
+Endpoint: `kamra.api.update_occupants`.
+Mutating - logged to the activity ledger.
+
+### `rooms_board()`
+
+Every room today: housekeeping status, occupancy, the in-house
+guest, who arrives or leaves today, whether the room is held out of
+service, and its open housekeeping task. Read-only.
+
+Endpoint: `kamra.rooms.rooms_board`.
+
+### `room_detail(room)`
+
+One room right now: its type and features, housekeeping status,
+the guest in it (with balance), the next arrival, active out-of-service
+holds and open housekeeping tasks. room is the room id (see
+rooms_board). Read-only.
+
+Endpoint: `kamra.rooms.room_detail`.
+
+### `room_availability(room, start_date, days)`
+
+One room night by night (up to 31 days): booked (by whom), held out
+of service, or free. Read-only.
+
+Endpoint: `kamra.rooms.room_availability`.
+
+### `room_history(room, limit)`
+
+Who stayed in a room lately (nights, room revenue), who cleaned and
+inspected it and when, its service tickets, and guests moved in or out
+of it. Read-only.
+
+Endpoint: `kamra.rooms.room_history`.
+
+### `room_insights(days, from_date, to_date)`
+
+Per-room numbers for the last 7, 30, 90, 180 or 365 nights: room
+nights and occupancy, posted room revenue, out-of-service nights and
+average cleaning time, with the most and least used rooms. Or pass
+from_date / to_date (up to 365 days) instead of days. Read-only.
+
+Endpoint: `kamra.rooms.room_insights`.
+
+### `list_report_packs()`
+
+Department report packs (Front Office, Housekeeping, F&B, Hotel
+Manager) with the sections this user's roles may see. Read-only.
+
+Endpoint: `kamra.custom_reports.list_report_packs`.
+
+### `run_report_pack(pack, from_date, to_date, format, lang)`
+
+Run a department pack (id from list_report_packs) for a date range;
+defaults to the last 7 days. format=json (default) or html.
+Read-only.
+
+Endpoint: `kamra.custom_reports.run_report_pack`.
+
+## Ops
+
+### `create_ticket(subject, category, priority, room, description)`
+
+Log a guest request / issue as a tracked ticket. Categories:
+Housekeeping, Room Service, Maintenance, Front Desk, Concierge,
+Complaint, Other. Priority sets the SLA.
+
+Endpoint: `kamra.api.create_ticket`.
+Mutating - logged to the activity ledger.
+
+### `list_tickets(show_closed)`
+
+Open service tickets with SLA/overdue status.
+
+Endpoint: `kamra.api.tickets_list`.
+
+### `advance_ticket(ticket, status, resolution_note)`
+
+Move a service ticket along: In Progress, Resolved, Closed, or
+Cancelled. Pass a resolution_note when resolving.
+
+Endpoint: `kamra.api.advance_ticket`.
+Mutating - logged to the activity ledger.
+
+### `sla_report(from_date, to_date)`
+
+Guest request (ticket) SLA over a date range: resolution and breach
+rates by category and priority, and the overdue queue. Read-only.
+
+Endpoint: `kamra.reports.sla_report`.
+
+## Housekeeping
+
+### `hk_queue()`
+
+Housekeeping phone view: prioritized task queue and room board.
+Checkout cleans for rooms with an arrival today jump the queue.
+
+Endpoint: `kamra.api.hk_queue`.
+
+### `hk_update_task(task, status)`
+
+Start or complete a housekeeping task. Status: In Progress, Done,
+or Verified.
+
+Endpoint: `kamra.api.hk_update_task`.
+Mutating - logged to the activity ledger.
+
+### `hk_assign_task(task, user)`
+
+Supervisor hands a task to a specific housekeeper (awaits accept).
+
+Endpoint: `kamra.api.hk_assign_task`.
+Mutating - logged to the activity ledger.
+
+### `hk_claim_task(task)`
+
+Housekeeper takes an unassigned task from the pool for themselves.
+
+Endpoint: `kamra.api.hk_claim_task`.
+Mutating - logged to the activity ledger.
+
+### `set_room_hk_status(room, status)`
+
+Set a room's housekeeping status: Clean, Dirty, Inspected, Ready,
+or Out of Order.
+
+Endpoint: `kamra.api.set_housekeeping_status`.
+Mutating - logged to the activity ledger.
+
+### `hk_post_consumable(room, charge_type, description, amount)`
+
+Housekeeping posts Minibar or Laundry found in a room onto the
+in-house guest's folio. Other charge types are refused.
+
+Endpoint: `kamra.api.hk_post_consumable`.
+Mutating - logged to the activity ledger.
+
+## Billing
+
+### `get_folio(reservation)`
+
+The guest's bill: charge lines, payments, GST, balance.
+
+Endpoint: `kamra.api.get_folio`.
+
+### `add_folio_charge(folio, charge_type, description, amount, gst_rate)`
+
+Post a charge to an open folio (F&B, minibar, laundry, late
+checkout…). Amount is pre-tax.
+
+Endpoint: `kamra.api.add_folio_charge`.
+Mutating - logged to the activity ledger.
+
+### `post_stay_charge(reservation, charge_type, description, amount, gst_rate, is_alcohol)`
+
+Post a charge to a stay and let the company billing rules pick the
+folio - corporate room/meals go to the Company folio, alcohol and
+unruled charges to the guest. Prefer this over add_folio_charge when
+you don't know which folio should carry the line.
+
+Endpoint: `kamra.api.post_stay_charge`.
+Mutating - logged to the activity ledger.
+
+### `split_folio_charge(from_folio, charge_row, to_folio, percent, amount)`
+
+Split one charge line between two folios of the same stay - e.g.
+a 70/30 corporate deal or a shared room. Give percent OR amount (the
+part that moves to to_folio). Use get_folio first to find folio and
+charge row names.
+
+Endpoint: `kamra.api.split_folio_charge`.
+Mutating - logged to the activity ledger.
+
+### `stay_folios(reservation)`
+
+All folios of a stay (guest / extra / company / group) with
+balances - plus the group master when the stay is on a block.
+
+Endpoint: `kamra.api.reservation_folios`.
+
+### `record_payment(folio, mode, amount, reference, kind, currency, idempotency_key)`
+
+Record money received on a folio. mode: one of the
+property's payment modes, or Payment Link. kind: Payment
+(default), Advance, or Security Deposit.
+Foreign money: pass currency (e.g. USD) and the foreign amount
+as amount, mode Cash or Bank Transfer; the PMS converts at the
+hotel's rate for today (see exchange_rates) and refuses if none
+is set. Confirm the amount and currency with staff before calling.
+
+Endpoint: `kamra.api.add_folio_payment`.
+Mutating - logged to the activity ledger.
+
+### `exchange_rates()`
+
+The hotel's exchange rates: latest buy and sell rate per foreign
+currency (home-currency units per 1 foreign unit), the date each
+was set, and its source: Manual (typed in by set_by) or Online
+(fetched market_rate with the hotel's margin). Foreign payments
+convert at the buy rate set for today's business date. Finance
+fetches or types missing rates; agents cannot. Read-only.
+
+Endpoint: `kamra.ledger.list_exchange_rates`.
+
+### `folio_in_currency(folio, currency)`
+
+A folio's total and balance shown in a foreign currency at
+today's rate, rounded up to the cent. Display only: the bill and
+tax invoice stay in the hotel's currency. Read-only.
+
+Endpoint: `kamra.ledger.folio_in_currency`.
+
+### `void_charge(folio, charge_row, reason)`
+
+Remove a WRONG charge line from an open folio (duplicate, wrong
+amount, wrong guest). Pass the folio and the charge line's id (`name`
+from get_folio). For settled/invoiced bills use apply_allowance.
+
+Endpoint: `kamra.api.void_folio_charge`.
+Mutating - logged to the activity ledger.
+
+### `apply_allowance(folio, amount, reason, gst_rate, reason_code)`
+
+Credit back part of a bill on an open folio without deleting the
+original line (service recovery, dispute, agreed discount). Needs a
+reason (or an Adjust reason_code); it goes on the record. When the
+property wants a manager's approval the result is pending: true
+with a request id, and nothing is on the bill until a manager
+approves it. You can ask, never approve.
+
+Endpoint: `kamra.api.post_allowance`.
+Mutating - logged to the activity ledger.
+
+### `allowance_requests(status, folio)`
+
+Allowances waiting for a manager's approval (status Pending), or
+decided ones (Approved / Rejected) with who decided and why.
+
+Endpoint: `kamra.api.allowance_requests`.
+
+### `open_guest_bills(reservation, names)`
+
+A separate bill for each guest sharing a room: opens one folio per
+other occupant (or per name given), invoiced in that guest's name.
+The main guest keeps the stay's Guest folio. Then use
+share_folio_charges to share the room nights.
+
+Endpoint: `kamra.api.open_guest_bills`.
+Mutating - logged to the activity ledger.
+
+### `share_folio_charges(from_folio, charge_rows, to_folios, shares)`
+
+Share charge lines (room nights) from one bill with the other
+guests' bills: evenly, or by shares (a percent per other bill, in
+the order of to_folios). The source bill keeps the rest.
+
+Endpoint: `kamra.api.share_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `change_stay_company(reservation, company, reason, move)`
+
+Change (or remove, company empty) the company a stay bills to.
+move=rules re-routes posted charges by the new company's billing
+rules; move=guest sends the company bill back to the guest.
+Refused once an invoice went to the old company. Runs credit
+control; an agent can't override a credit block. Confirm with
+staff first and give the reason.
+
+Endpoint: `kamra.api.change_stay_company`.
+Mutating - logged to the activity ledger.
+
+### `move_charges(from_folio, charge_rows, to_folio)`
+
+Move charge lines to another folio of the same stay or group.
+charge_rows is a list of charge line names from get_folio.
+
+Endpoint: `kamra.api.transfer_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `close_folio(folio)`
+
+Close / settle an open folio and issue the invoice number. Balance
+must be zero (or use part-settle elsewhere). Confirm with staff  -
+irreversible.
+
+Endpoint: `kamra.api.close_folio`.
+Mutating - logged to the activity ledger.
+
+### `send_payment_link(folio)`
+
+Create an online payment link (the property's payment gateway) for a folio's outstanding balance
+(SMS/email to the guest when contact details exist).
+
+Endpoint: `kamra.api.folio_payment_link`.
+Mutating - logged to the activity ledger.
+
+### `send_deposit_link(reservation, amount)`
+
+Create a payment link for a booking's deposit before arrival - the
+deposit still due (the property's deposit %) unless an amount is
+given. When the guest pays, it posts to the folio as an Advance and
+confirms a held booking. Returns the link and a ready-to-send message.
+
+Endpoint: `kamra.api.deposit_payment_link`.
+Mutating - logged to the activity ledger.
+
+### `company_credit_status(company, amount)`
+
+A company's credit position before billing it more: its credit
+limit (0 = none), what it owes on the city ledger and on stays in
+house, bills overdue past the grace period, and whether billing
+`amount` more would be warned or blocked by the property's credit
+control. Read-only. Bookings on company billing and check-outs run
+the same check; an agent can't override a block.
+
+Endpoint: `kamra.credit.company_credit_status`.
+
+### `city_ledger_aging()`
+
+Every company's city-ledger (AR) balance at this property, aged by
+due date. Buckets per account and in totals: not due, 1 to 30 days,
+31 to 60, 61 to 90, and 90+ days overdue (plus their sum `overdue`).
+Read-only  -  use it to answer who owes money and how late.
+
+Endpoint: `kamra.ledger.city_ledger_aging`.
+
+### `ar_accounts()`
+
+Every company account (AR) at this property: account number,
+billing contact, credit limit, payment terms, balance, overdue and
+whether it is restricted. Use the `name` it returns as `account` for
+ar_account_detail and create_ar_invoice. Read-only.
+
+Endpoint: `kamra.receivables.ar_accounts`.
+
+### `ar_account_detail(account)`
+
+One company account: balance, aging by due date, credit available
+under the limit (stays in house count against it), money paid ahead,
+each open bill with its due date and days late, and recent payments.
+Read-only.
+
+Endpoint: `kamra.ledger.city_ledger_account`.
+
+### `company_monthly_bill(account, month)`
+
+A company's month-end bill for one account: every bill of the month
+(month as YYYY-MM) with its invoice number, taxable value and tax, the
+company's payments, and the balance brought and carried forward.
+Each stay keeps its own tax invoice; this is the monthly summary.
+Read-only.
+
+Endpoint: `kamra.statements.company_monthly_bill`.
+
+### `create_ar_invoice(account, lines, reference)`
+
+Bill a company account directly for something that was not a stay
+(meeting room, contract fee). `lines` is [{charge_type, description,
+amount, qty, gst_rate}]: amount is the unit price before tax,
+charge_type one of Room, Meal Plan, Food & Beverage, Minibar, Laundry,
+Spa, Misc (and the room fees); the PMS taxes F&B at the hotel's rate
+and refuses an unknown rate. Credit control runs as at check-out and
+an agent can't override a block. Refused on a restricted account.
+Confirm the lines and total with the user first.
+
+Endpoint: `kamra.receivables.create_ar_invoice`.
+Mutating - logged to the activity ledger.
+
+### `payables_aging()`
+
+What the hotel owes each supplier (accounts payable), aged by due
+date: not due, 1 to 30, 31 to 60, 61 to 90 and 90+ days overdue, with
+totals. Read-only.
+
+Endpoint: `kamra.payables.payables_aging`.
+
+### `vendor_bills(status, vendor)`
+
+Supplier bills at this property, most urgent first: amount, tax,
+total, paid, still owed, due date and status. `status` is "open" (the
+default: not paid or cancelled), "all", or one of Awaiting Approval,
+Approved, Part Paid, Paid, Cancelled. Read-only.
+
+Endpoint: `kamra.payables.vendor_bills`.
+
+### `create_vendor_bill(vendor, bill_date, amount, tax_rate, expense_category, bill_number, due_date, description)`
+
+Enter a supplier's bill so it can be approved and paid. `vendor` is
+the vendor's id or exact name at this property. `amount` is before
+tax; the PMS works out the tax from `tax_rate` (%) and the due date
+from the vendor's terms unless `due_date` is on the bill. Dates are
+YYYY-MM-DD. The bill waits for a Hotel Admin to approve it; once
+approved, Finance or a Hotel Admin pays it in Payables. Agents cannot
+approve or pay.
+
+Endpoint: `kamra.payables.create_vendor_bill`.
+Mutating - logged to the activity ledger.
+
+### `cash_forecast(days, opening)`
+
+Money expected in and out over the next 5, 15 or 30 days (`days`,
+default 5), day by day with weekly subtotals: company bills falling
+due, departing guests' balances and advance deposits in; supplier
+bills out, including draft bills still awaiting approval (flagged
+`draft`, totalled in `draft_out`). Overdue items count today.
+`opening` is today's cash and bank; without it, cash in open tills.
+Read-only.
+
+Endpoint: `kamra.books.cash_forecast`.
+
+### `profit_and_loss(from_date, to_date)`
+
+Management P&L for a period (from_date, to_date as YYYY-MM-DD, a
+year at most): revenue by department before tax, less supplier bills
+by category and petty cash. Not statutory accounts. Read-only.
+
+Endpoint: `kamra.books.profit_and_loss`.
+
+### `balance_sheet(as_of)`
+
+What is owed to the hotel (guest ledger, city ledger, cash in open
+tills today) and what it owes (advance deposits, supplier bills) as of
+a date (default today). Not a full balance sheet: no bank, assets,
+loans or equity. Read-only.
+
+Endpoint: `kamra.books.balance_sheet`.
+
+### `security_deposit_status(reservation)`
+
+The stay's refundable security (damage) deposit: the property's
+policy amount, what is held, withheld and refunded, and whether it is
+still holding up check-out. Withholding and refunding are done by
+staff at the desk (cashier PIN) - not by an agent.
+
+Endpoint: `kamra.api.security_deposit`.
+
+### `collect_security_deposit(reservation, amount, mode, reference)`
+
+Record a refundable security deposit the guest has paid (villas:
+the damage deposit). It is held on the guest folio as a liability,
+not revenue, and refunded or withheld at check-out. mode: one of the
+property's payment modes. Confirm the amount with staff first.
+
+Endpoint: `kamra.api.collect_security_deposit`.
+Mutating - logged to the activity ledger.
+
+### `waive_security_deposit(reservation, reason)`
+
+Waive the property's security deposit for one stay. A reason is
+required and goes on the record; refused once money was taken.
+
+Endpoint: `kamra.api.waive_security_deposit`.
+Mutating - logged to the activity ledger.
+
+### `cashier_shift_report(business_date, to_date)`
+
+What each cashier took on a business date (or business_date to
+to_date), by payment mode. Read-only.
+
+Endpoint: `kamra.cashier.shift_report`.
+
+### `voids_allowances_report(from_date, to_date)`
+
+Every void and allowance in a date range, with who did it and why.
+Read-only.
+
+Endpoint: `kamra.reports.void_allowance_report`.
+
+### `list_report_datasets()`
+
+Whitelisted custom-report datasets (arrivals, occupancy, payments,
+etc.) with allowed columns and filter ops. Use before save_custom_report
+or run_custom_report. Read-only.
+
+Endpoint: `kamra.custom_reports.list_report_datasets`.
+
+### `list_custom_reports()`
+
+Saved custom reports for this property that the user can open.
+Read-only.
+
+Endpoint: `kamra.custom_reports.list_custom_reports`.
+
+### `save_custom_report(title, dataset, columns, filters, is_shared, schedule_frequency, schedule_time, schedule_weekday, recipients, name)`
+
+Create or update a saved custom report: title, dataset id, columns
+(JSON array of field ids), filters (JSON array of
+{field, op, value}), optional share/schedule/recipients. Pass name to
+update. Only catalog field ids - never invent SQL.
+
+Endpoint: `kamra.custom_reports.save_custom_report`.
+Mutating - logged to the activity ledger.
+
+### `run_custom_report(name, dataset, from_date, to_date, columns, filters, format, lang)`
+
+Run a saved custom report (name) or an ad-hoc definition (dataset +
+columns/filters). from_date / to_date YYYY-MM-DD. format=json (default),
+csv, or html. Prefer json for agents. Read-only.
+
+Endpoint: `kamra.custom_reports.run_custom_report`.
+
+### `email_custom_report(recipients, name, dataset, from_date, to_date, columns, filters, attach_format, lang)`
+
+Run a custom report and email a CSV (or HTML) attachment to
+comma-separated recipients. Pass name for a saved report, or dataset
+(+ columns/filters) for ad-hoc. from_date / to_date optional (defaults
+to yesterday).
+
+Endpoint: `kamra.custom_reports.email_custom_report`.
+Mutating - logged to the activity ledger.
+
+## Revenue
+
+### `set_room_rate(room_type, start_date, end_date, rate, reason)`
+
+Set the nightly rate for a room type over a date range. Bounded by
+the owner's rate guardrails - the PMS rejects rates outside the
+floor/ceiling. Always give a reason (it goes in the audit trail).
+
+Endpoint: `kamra.api.set_room_rate`.
+Mutating - logged to the activity ledger.
+
+## Briefings
+
+### `owner_briefing(date)`
+
+The owner's morning numbers: occupancy, yesterday's revenue/ADR/
+RevPAR, arrivals/departures, open tickets, next-7-day availability,
+agent hours saved. Turn this into a short, warm briefing - never
+change the figures.
+
+Endpoint: `kamra.api.owner_briefing`.
+
+### `position_briefing(date)`
+
+The hotel-position briefing for the GM and front desk: today's
+occupancy against the overbooking ceiling, arrivals sorted by ETA,
+departures with ETDs and balances due, back-to-back room conflicts
+(incoming guest lands before the outgoing one leaves), the demand
+tier pricing is applying, and a 7-day occupancy outlook. Read it out
+as a crisp shift briefing - never change the figures.
+
+Endpoint: `kamra.api.position_briefing`.
+
+### `manager_flash(date, from_date)`
+
+The daily flash: yesterday's occupancy, ADR, RevPAR and revenue,
+month to date, today's movement, collections by mode and the 7-day
+outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
+Read-only.
+
+Endpoint: `kamra.reports.manager_flash`.
+
+### `night_audit_report(date)`
+
+The night audit report for a business date (default: the last one
+closed): room nights, occupancy, ADR, RevPAR, food and beverage apart,
+each outlet, banquets, meal plans and minibar, other income, for the
+day, month to date and year to date from the start of the property's
+financial year, and the guest, advance and city ledger balances
+brought and carried forward. Read-only.
+
+Endpoint: `kamra.audit_report.night_audit_report`.
+
+## Night audit
+
+### `run_night_audit(business_date, acknowledge, note)`
+
+Run the end-of-day for the property's current business date: post
+the night's room charges for in-house guests at their confirmed
+nightly rates, flag no-shows per the property's no-show policy, then
+roll the business date forward. Call night_audit_precheck first: the
+run is refused while a blocking check (open tills, open restaurant
+bills, departures still in house) has items. Resolve them, or - only
+when a staff member confirms and gives the reason - pass acknowledge
+(the blocking check keys) and note (the reason); who acknowledged it
+is recorded on the run. Late arrivals due on the closed date may be
+held as Due In (held_late_arrivals); OTA no-shows may carry no fee
+(no_show_fees_waived). Each run saves an audit pack (has_pack).
+business_date is optional; if given it must equal the current
+business date. A day that already closed returns already_ran.
+
+Endpoint: `kamra.api.run_night_audit`.
+Mutating - logged to the activity ledger.
+
+### `night_audit_precheck()`
+
+The night audit checklist for the current business date, read-only.
+Checks: open_tills, open_pos_bills, departures_due (blocking by
+default), arrivals_pending (with what the no-show policy will do),
+rate_variance, pos_room_postings, high_balance, credit_limit and
+room_status. Each has severity (block | warn | info), count, items
+(reservation, folio, room, guest, amount, outlet / bill no) and a
+suggested action. blockers lists the checks stopping a manual run;
+can_run is true when there are none.
+
+Endpoint: `kamra.night_audit.night_audit_precheck`.
+
+### `rebuild_audit_pack(audit)`
+
+Rebuild the printable night-audit pack for a completed Night Audit
+Run (when has_pack is false, or to refresh). Does not re-post charges
+or roll the business date. Pass the audit run name.
+
+Endpoint: `kamra.night_audit.rebuild_audit_pack`.
+Mutating - logged to the activity ledger.
+
+### `recover_stuck_business_date()`
+
+Advance the business date when a completed night audit exists for
+the current open date but the roll did not stick (restore / ops).
+Never re-posts room nights. Call only when stuck_date is set on the
+End of Day overview.
+
+Endpoint: `kamra.night_audit.recover_stuck_business_date`.
+Mutating - logged to the activity ledger.
+
+## Groups
+
+### `group_billing(group_booking)`
+
+A group's whole billing picture: the consolidated company (master)
+folio plus each member reservation's own folios with balances. Use
+split_folio_charge to move value between a member's bill and the
+master - company pays the stay, guests pay their extras.
+
+Endpoint: `kamra.api.group_folios`.
+
+### `create_group_block(group_name, check_in_date, check_out_date, blocks, company, cutoff_date, venue, event_type, event_date, attendees, customer_phone)`
+
+Draft a MICE piece of business in one call: a group booking with a room
+block (list of {room_type, rooms_blocked, block_rate}) and optionally its
+banquet event. The agent wedge: turn "30 rooms + a 200-pax wedding on
+Dec 12" into a live proposal. Starts Open; confirming it holds the rooms
+out of general sale until the cutoff date.
+
+Endpoint: `kamra.api.create_group_block`.
+Mutating - logged to the activity ledger.
+
+### `group_pickup_status(group_booking)`
+
+Group Rooms Control: the block, per-room-type pickup (blocked / picked
+up / remaining), rooming list (status, room, main room, pays own
+charges), tied event, the main room and the group bill with its
+balance.
+
+Endpoint: `kamra.api.group_detail`.
+
+### `create_group_booking(group_name, check_in_date, check_out_date, rooms, guest_name, phone, company, group_type, master_index, master_pays, meal_plan)`
+
+Book a group (corporate, wedding, event, tour) in one call: one
+reservation per room on the same dates. rooms = [{room_type, count,
+room?, guest_name?}]; unnamed rooms take guest_name. master_index
+picks the main room (default the first) whose guest pays what
+master_pays covers for every room on one group bill: "Room only"
+(room + tax, the default), "Room and F&B (liquor to guest)",
+"Everything except liquor". Rooms that cannot be booked are skipped
+and reported. Prices come from the rate card.
+
+Endpoint: `kamra.api.create_group_booking`.
+Mutating - logged to the activity ledger.
+
+### `settle_group_bill(group_booking, mode, amount, to_city_ledger, reference)`
+
+Settle a group's bill (the main room's master folio): take a payment
+by mode (amount defaults to the whole balance) or, for a company group
+with credit, set to_city_ledger. The bill closes and is invoiced once
+its balance is 0. Check group_pickup_status for the balance first.
+
+Endpoint: `kamra.api.settle_group_bill`.
+Mutating - logged to the activity ledger.
+
+### `pickup_group_room(group_booking, room_type, guest_name, phone, adults, children, idempotency_key)`
+
+Name a guest into a group's room block - creates their reservation on
+the group's dates against the held inventory.
+
+Endpoint: `kamra.api.pickup_group_room`.
+Mutating - logged to the activity ledger.
+
+## Banquets
+
+### `banquet_availability(event_date, end_date, start_time, end_time, pax)`
+
+Which halls are free for a date, hours and pax. A confirmed function
+takes the hall; a tentative hold is shown as a soft hold you can still
+sell over. Two functions can share a hall morning and evening - only a
+real overlap in hours counts as taken. Run this before every enquiry.
+
+Endpoint: `kamra.banquet.venue_availability`.
+
+### `banquet_catalogue()`
+
+What the property sells at a function: menu packages priced per plate
+(with their courses), and the service list - LED wall, projector, DJ,
+podium, stage, decor, laptop, bar. Read this before quoting anything;
+never invent a price.
+
+Endpoint: `kamra.banquet.banquet_catalogue`.
+
+### `banquet_enquiry(venue, event_date, customer_name, event_type, attendees, customer_phone, customer_email, company, end_date, session, start_time, end_time, source, requirements)`
+
+Open a function sheet from an enquiry. The hall's rack rental goes on
+as the first line and a follow-up is diarised, so the enquiry can't go
+quiet. Halls sell by session: pass session (Morning / Afternoon /
+Evening / Full Day) and the hours follow it, or session "Custom Hours"
+with start_time and end_time. Check banquet_availability first.
+
+Endpoint: `kamra.banquet.create_enquiry`.
+Mutating - logged to the activity ledger.
+
+### `banquet_sheet(function)`
+
+One function in full: dates, pax (expected / guaranteed / actual),
+every line item with its chargeable flag, the negotiation history,
+payment terms, receipts, and what it still needs from somebody.
+
+Endpoint: `kamra.banquet.function_sheet`.
+
+### `banquet_add_menu(function, menu, qty, rate, chargeable)`
+
+Put a menu package on a function. Left alone the quantity follows the
+pax rule (guaranteed, or actual if more turned up) and the price is the
+package's own plate price. chargeable=0 gives it away - it still prints
+on the event order, it just leaves the quote.
+
+Endpoint: `kamra.banquet.add_menu`.
+Mutating - logged to the activity ledger.
+
+### `banquet_add_service(function, service_item, qty, rate, chargeable)`
+
+Put a service on a function - projector, LED wall, DJ, podium, stage,
+decor, laptop, bar. The catalogue decides chargeable by default; pass
+chargeable=0 to throw it in for this function.
+
+Endpoint: `kamra.banquet.add_service`.
+Mutating - logged to the activity ledger.
+
+### `banquet_negotiate(function, discount_amount, venue_rental, note)`
+
+Move the price: a headline discount on the whole quote, or the hall
+rate on its own. Every move is snapshotted with what the quote was worth
+before and after, so the fourth revision stays explainable. Confirm the
+new total with the user before calling.
+
+Endpoint: `kamra.banquet.negotiate`.
+Mutating - logged to the activity ledger.
+
+### `banquet_payment_terms(function, terms, note)`
+
+Set the payment schedule: [{milestone, due_date, percent | amount}].
+A term stated as a percentage follows the quote as it moves; one stated
+as an amount is a number both sides agreed and stays put.
+
+Endpoint: `kamra.banquet.set_payment_terms`.
+Mutating - logged to the activity ledger.
+
+### `banquet_record_receipt(function, amount, mode, kind, reference)`
+
+Record money in against a function (Advance / Payment / Security
+Deposit / Refund).
+
+Endpoint: `kamra.banquet.record_receipt`.
+Mutating - logged to the activity ledger.
+
+### `banquet_status(function, status, reason)`
+
+Move a function along: Enquiry → Tentative → Confirmed, or out as
+Cancelled / Lost. Cancelling or losing needs a reason. Confirming takes
+the hall and will refuse a clash with another confirmed function. A
+confirmed function is completed with banquet_close_out, not here.
+
+Endpoint: `kamra.banquet.set_status`.
+Mutating - logged to the activity ledger.
+
+### `banquet_link_group(function, group_booking)`
+
+Tie a function to a group booking at the same property so its bill
+rides the group's master folio when it is posted to the bill, or untie
+it by leaving group_booking empty. Refused once the function is billed.
+
+Endpoint: `kamra.banquet.link_group`.
+Mutating - logged to the activity ledger.
+
+### `banquet_quote(function, valid_days)`
+
+Stamp a quotation - bumps the version, dates it, and returns the whole
+document so it can be read back or emailed.
+
+Endpoint: `kamra.banquet.generate_quote`.
+Mutating - logged to the activity ledger.
+
+### `banquet_event_order(function)`
+
+Issue the banquet event order - the running sheet the banquet, kitchen
+and AV teams work the day from, with the menus expanded into courses.
+Only a confirmed function gets one.
+
+Endpoint: `kamra.banquet.generate_beo`.
+Mutating - logged to the activity ledger.
+
+### `banquet_document(function, kind)`
+
+Fetch a function's paper without re-issuing it. kind: quote, contract,
+beo, pack_list, invoice. The pack list is what physically has to reach
+the hall, complimentary items included.
+
+Endpoint: `kamra.banquet.banquet_document`.
+
+### `banquet_pipeline(from_date, to_date, months)`
+
+The banquet sales picture, month by month and by status: what's
+confirmed, what's still in play, what's outstanding, the conversion
+rate, and why business went away. Dated on the event, not the enquiry.
+
+Endpoint: `kamra.banquet.banquet_pipeline`.
+
+### `banquet_reminders(days)`
+
+Everything that needs chasing: follow-ups gone quiet, tentative holds
+about to lapse, payments due, event orders missing before the date,
+functions confirmed with nothing received.
+
+Endpoint: `kamra.banquet.banquet_reminders`.
+
+### `banquet_month(month)`
+
+Every hall and every session across a whole month - the grid that
+answers "do you have the 14th of December?" in one look. Halls are sold
+by session (Morning / Afternoon / Evening), not by the hour, so a hall
+can take a morning conference and an evening wedding on the same day.
+month is YYYY-MM; omit for the current one.
+
+Endpoint: `kamra.banquet.month_availability`.
+
+### `banquet_close_out(function, damage_amount, damage_note, pax_actual, refund_deposit)`
+
+Hand the hall back after the function. Records the covers actually
+served, deducts any damage from the refundable deposit - a reason is
+required, and you can't deduct more than is held - and returns the rest
+as a real refund line. Closes the function.
+
+Endpoint: `kamra.banquet.close_out`.
+Mutating - logged to the activity ledger.
+
+### `banquet_register(register, from_date, to_date)`
+
+The banquet office's books for a period. register is one of:
+functions (everything booked), quotations (what was quoted and whether
+it landed), enquiries (what came in), receipts (the cash book, by
+mode), sales (revenue rolled up by hall, event type, session and
+source).
+
+Endpoint: `kamra.banquet.banquet_register`.
+
+### `banquet_menu_card(function)`
+
+What will actually be served, course by course, with no prices on it
+-  the sheet the customer signs off and the kitchen cooks from.
+
+Endpoint: `kamra.banquet.menu_card`.
+
+### `banquet_receipt_document(function, receipt)`
+
+One receipt as a document the customer can keep, with the amount in
+words and the running balance on the function.
+
+Endpoint: `kamra.banquet.receipt_document`.
+
+## F&B
+
+### `pos_outlets()`
+
+List F&B outlets (restaurant, bar, room service) for this property.
+
+Endpoint: `kamra.pos.outlets`.
+
+### `pos_menu(outlet)`
+
+Menu items for an outlet (with courses, prices, allergens).
+
+Endpoint: `kamra.pos.pos_menu`.
+
+### `pos_table_map(outlet)`
+
+Floor plan: tables with occupancy, open checks, and reservations.
+
+Endpoint: `kamra.pos.table_map`.
+
+### `pos_open_orders(outlet)`
+
+Open POS checks at an outlet.
+
+Endpoint: `kamra.pos.open_orders`.
+
+### `pos_order_detail(order)`
+
+One POS order: items, KOTs, totals, payment state, who served it
+(served_by) and who settled it (cashier), and each line's kitchen
+times (fired_at, started_at, prepared_at, picked_up_at).
+
+Endpoint: `kamra.pos.order_detail`.
+
+### `pos_create_order(outlet, items, table_no, room, reservation, guests, customer_name, customer_phone, order_type, notes)`
+
+Open a POS check. items = [{item, qty, notes?}]. Optionally bind
+table_no and/or a room/reservation for room charge.
+
+Endpoint: `kamra.pos.create_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_add_items(order, items)`
+
+Add items to an open POS order. items = [{item, qty, notes?}].
+
+Endpoint: `kamra.pos.add_items`.
+Mutating - logged to the activity ledger.
+
+### `pos_confirm_order(order)`
+
+Confirm a draft order so it can be fired to the kitchen.
+
+Endpoint: `kamra.pos.confirm_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_fire_kot(order, course)`
+
+Fire a kitchen order ticket (whole check or one course).
+
+Endpoint: `kamra.pos.fire_kot`.
+Mutating - logged to the activity ledger.
+
+### `pos_send_order(outlet, items, table_no, room, reservation, guests, order_type, customer_name, customer_phone, delivery_address, allergy_note, notes, waiter)`
+
+Open a new POS check and send it straight to the kitchen in one
+step (create, confirm and fire the KOT). Use this for a normal order;
+pos_create_order is for a check you will fire later. items = [{item,
+qty, notes?}]. Optionally bind table_no and/or a room/reservation.
+
+Endpoint: `kamra.pos.send_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_send_round(order, items)`
+
+Add another round to an open POS check and fire it to the kitchen in one step. items = [{item, qty, notes?}].
+
+Endpoint: `kamra.pos.send_round`.
+Mutating - logged to the activity ledger.
+
+### `pos_kitchen_queue(outlet)`
+
+KDS view: tickets waiting / cooking for the property (optional outlet).
+
+Endpoint: `kamra.pos.kitchen_queue`.
+
+### `pos_pay_order(order, mode)`
+
+Settle a POS check. mode: a payment mode the property offers (Cash, Card, ...) or Room Charge.
+Confirm the total with staff before calling.
+
+Endpoint: `kamra.pos.pay_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_orders(outlet, date, to_date, q, state)`
+
+Bills at an outlet for a day (default today) or a date range of up
+to 31 days, newest first, each with its state: open (not sent to the
+kitchen), sent, paid, room (posted to a room folio), nc, closed or
+cancelled. Viewing today also lists bills still open from earlier
+days. q searches bill/KOT number, table, room and customer.
+
+Endpoint: `kamra.pos.orders_list`.
+
+### `pos_cancel_order(order, reason)`
+
+Cancel an open POS bill that has nothing sent to the kitchen yet,
+with a reason (kept on the bill and in the activity log; the table is
+freed). Refused once any item was fired: food the kitchen started is
+voided by a supervisor at the till, never by an agent. Check with
+pos_order_detail first (kitchen_lines must be 0).
+
+Endpoint: `kamra.pos.cancel_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_move_room_bill(order, room, reason)`
+
+Move a restaurant bill that was charged to the wrong room onto the
+right in-house room, the same business day it was posted, with a
+reason. The charge leaves the first guest's bill and lands on the
+right guest's (liquor never on a company bill). Confirm the room with
+the user first.
+
+Endpoint: `kamra.pos.move_room_bill`.
+Mutating - logged to the activity ledger.
+
+### `pos_remove_item(order, item_row)`
+
+Remove one line that has not been sent to the kitchen from an open
+POS bill (row id from pos_order_detail). Lines the kitchen already has
+are refused, and so is the last line (cancel the bill instead).
+
+Endpoint: `kamra.pos.remove_item`.
+Mutating - logged to the activity ledger.
+
+### `pos_room_lookup(room, last_name)`
+
+Find an in-house guest to charge: by room number and/or last name
+(2+ letters). Only checked-in stays at this property; returns room,
+guest name, reservation and departure date.
+
+Endpoint: `kamra.pos_interface.pos_room_lookup`.
+
+### `pos_post_room_charge(ticket_id, amount, description, room, reservation, charge_type, is_alcohol, outlet_name)`
+
+Post an outlet ticket (bar, spa, restaurant on another POS) to an
+in-house guest's bill. ticket_id is the POS check number and makes the
+call safe to retry: the same ticket is never posted twice. The billing
+rules pick the folio; alcohol (is_alcohol=true) always goes to the
+guest's own folio. Confirm the amount with staff before calling.
+
+Endpoint: `kamra.pos_interface.pos_post_room_charge`.
+Mutating - logged to the activity ledger.
+
+### `outlets()`
+
+The property's restaurants, bars and other outlets. Call before
+outlet_dashboard or wastage_report to get an outlet id. Read-only.
+
+Endpoint: `kamra.pos.outlets`.
+
+### `outlet_dashboard(outlet, date, to_date)`
+
+One outlet's day: sales, bills, covers, average bill, by order type
+and tender, open bills, NC / voids / cancellations, kitchen times.
+Pass to_date for a range starting on date. Read-only.
+
+Endpoint: `kamra.pos.outlet_dashboard`.
+
+### `wastage_report(outlet, days)`
+
+Food cooked and then voided over the last N days (default 30), with
+its cost; optionally for one outlet. Read-only.
+
+Endpoint: `kamra.inventory.wastage_report`.
+
+## Laundry
+
+### `laundry_board()`
+
+Laundry ops board: pickups, in-plant, ready, deliveries outstanding.
+
+Endpoint: `kamra.laundry.laundry_board`.
+
+### `laundry_rates()`
+
+Rate card for laundry items and service types at this property.
+
+Endpoint: `kamra.laundry.laundry_rates`.
+
+### `laundry_collect(room, items, express, order, notes)`
+
+Collect guest laundry. items = [{item_name, service_type, qty}].
+Bills from the rate card; express=true for rush. Pass order to fill
+a prior pickup request.
+
+Endpoint: `kamra.laundry.collect_laundry`.
+Mutating - logged to the activity ledger.
+
+### `laundry_status(order, status)`
+
+Advance a laundry bag: Collected → In Process → Ready (one step
+at a time). Use laundry_deliver to finish.
+
+Endpoint: `kamra.laundry.laundry_status`.
+Mutating - logged to the activity ledger.
+
+### `laundry_deliver(order, shortage_note)`
+
+Mark laundry delivered to the guest/room; posts any final charges.
+
+Endpoint: `kamra.laundry.deliver_laundry`.
+Mutating - logged to the activity ledger.
+
+## Onboarding
+
+### `setup_property(payload)`
+
+Onboard a whole property in one call - the migration assistant's
+tool. Ask the hotel for their room list/rate card (any format), map
+it into: {property:{property_name, city, gstin?, phone?},
+room_types:[{code,name,base_price,adults?}], rooms:[{room_type_code,
+numbers:[..]}], meal_plans:[{code,price_per_adult}]}. Confirm the
+mapping with the user before calling.
+
+Endpoint: `kamra.api.setup_property`.
+Mutating - logged to the activity ledger.
+
+### `import_bookings(bookings, property)`
+
+Migrate existing reservations from another PMS/spreadsheet. Each:
+{guest_name, phone?, room_type_code, check_in, check_out, adults?,
+amount_after_tax?, channel?, status?}. Fixed amounts are preserved;
+otherwise the pricing engine quotes. Returns per-row errors - report
+them to the user rather than silently dropping rows.
+
+Endpoint: `kamra.api.import_bookings`.
+Mutating - logged to the activity ledger.

@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+/* Theme toggle uses <html class="dark"> (see lib/theme.ts). Without this,
+   Tailwind v4's dark: variants follow prefers-color-scheme — or worse, paint
+   dark:bg-* as always-on — so the Agent composer goes black on a light theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Quantumberg brand: purple #453D89 → pink #C8499A. The ramp is
+     purple-dominant so text/borders keep contrast; primary fills pick up
+     the gradient further down. */
+  --color-brand-50: #f3f1fb;
+  --color-brand-100: #e6e1f8;
+  --color-brand-600: #453d89;
+  --color-brand-700: #372f6e;
+  --color-brand-900: #1e1a40;
+
+  /* Neutrals carry a faint warm bias so the greys read as chosen, not the
+     stock cool zinc. Dark mode + print remap these below. */
+  --color-zinc-50: #f8f7f5;
+  --color-zinc-100: #e7e5e4;
+  --color-zinc-200: #d6d3d1;
+  --color-zinc-300: #c7c3bd;
+  --color-zinc-400: #78716c;
+}
+
+html,
+:host {
+  font-feature-settings: "tnum" 1; /* tabular numbers for counts and money */
+}
+
+/* /desk/kamra mounts this app in a shadow root, so the base is the desk
+   body's typography (14px / 420 / 0.28px tracking) inherited across the
+   shadow boundary rather than the document defaults /kamra gets on <html>.
+   Pin the same metrics here so both routes start from an identical base.
+   :host only matches inside a shadow tree, so the light DOM route is
+   untouched. line-height 1.5 comes from Tailwind's preflight on :host. */
+:host {
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-align: start;
+}
+
+:root,
+:host {
+  --ui-surface: #ffffff;
+  --ui-border: #d6d3d1;
+  --ui-divider: #e6e3de;
+  --ui-text: #18181b;
+  --ui-muted-text: #78716c;
+  --ui-focus: #453d89;
+}
+
+/* Dark mode: every utility reads its color from a CSS variable, so
+   remapping the palette on .dark themes the whole app. Scrims/overlays
+   use bg-black so they stay dark in both themes. */
+.dark {
+  color-scheme: dark;
+  --ui-surface: #1c1c1f;
+  --ui-border: #3d3d44;
+  --ui-divider: #303036;
+  --ui-text: #f6f6f7;
+  --ui-muted-text: #a7a7b0;
+  --ui-focus: #c4b1f0;
+  --color-white: #1c1c1f;
+  --color-zinc-50: #151517;
+  --color-zinc-100: #29292e;
+  --color-zinc-200: #3d3d44;
+  --color-zinc-300: #4a4a52;
+  --color-zinc-400: #8a8a93;
+  --color-zinc-500: #a7a7b0;
+  --color-zinc-600: #c6c6cd;
+  --color-zinc-700: #dadade;
+  --color-zinc-800: #ebebee;
+  --color-zinc-900: #f6f6f7;
+  --color-zinc-950: #ffffff;
+  --color-brand-50: #241f47;
+  --color-brand-100: #302a5c;
+  --color-brand-600: #a78bda;
+  --color-brand-700: #c4b1f0;
+  --color-brand-900: #e9e2fb;
+  --color-rose-50: #391521;
+  --color-rose-200: #5c2537;
+  --color-rose-500: #fb7185;
+  --color-rose-600: #fb7185;
+  --color-rose-700: #fda4af;
+  --color-rose-800: #fecdd3;
+  --color-rose-900: #ffe4e6;
+  --color-amber-50: #3b2c0a;
+  --color-amber-200: #6b4e0e;
+  --color-amber-600: #fbbf24;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-emerald-50: #0e3323;
+  --color-emerald-200: #17573a;
+  --color-emerald-600: #34d399;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+  --color-emerald-900: #d1fae5;
+  --color-sky-50: #0d2e40;
+  --color-sky-100: #123a50;
+  --color-sky-200: #1a567a;
+  --color-sky-700: #7dd3fc;
+  --color-sky-800: #a5deff;
+  --color-sky-900: #cfeeff;
+}
+
+/* Printables (GRC, invoices) always come out on paper-white. */
+@media print {
+  .dark {
+    color-scheme: light;
+    --ui-surface: #ffffff;
+    --ui-border: #d6d3d1;
+    --ui-divider: #e6e3de;
+    --ui-text: #18181b;
+    --ui-muted-text: #78716c;
+    --ui-focus: #453d89;
+    --color-white: #ffffff;
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f4f4f5;
+    --color-zinc-200: #e4e4e7;
+    --color-zinc-300: #d4d4d8;
+    --color-zinc-400: #a1a1aa;
+    --color-zinc-500: #71717a;
+    --color-zinc-600: #52525b;
+    --color-zinc-700: #3f3f46;
+    --color-zinc-800: #27272a;
+    --color-zinc-900: #18181b;
+    --color-zinc-950: #09090b;
+    --color-brand-50: #f3f1fb;
+    --color-brand-100: #e6e1f8;
+    --color-brand-600: #453d89;
+    --color-brand-700: #372f6e;
+    --color-brand-900: #1e1a40;
+    --color-rose-50: #fff1f2;
+    --color-rose-200: #fecdd3;
+    --color-rose-500: #f43f5e;
+    --color-rose-600: #e11d48;
+    --color-rose-700: #be123c;
+    --color-rose-800: #9f1239;
+    --color-rose-900: #881337;
+    --color-amber-50: #fffbeb;
+    --color-amber-200: #fde68a;
+    --color-amber-600: #d97706;
+    --color-amber-800: #92400e;
+    --color-amber-900: #78350f;
+    --color-emerald-50: #ecfdf5;
+    --color-emerald-200: #a7f3d0;
+    --color-emerald-600: #059669;
+    --color-emerald-700: #047857;
+    --color-emerald-800: #065f46;
+    --color-emerald-900: #064e3b;
+    --color-sky-50: #f0f9ff;
+    --color-sky-100: #e0f2fe;
+    --color-sky-200: #bae6fd;
+    --color-sky-700: #0369a1;
+    --color-sky-800: #075985;
+    --color-sky-900: #0c4a6e;
+  }
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 antialiased;
+}
+
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  textarea,
+  select {
+    border: 1px solid var(--ui-border);
+    border-radius: 0.5rem;
+    background-color: var(--ui-surface);
+    color: var(--ui-text);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--ui-muted-text);
+    opacity: 1;
+  }
+
+  :where(
+    button,
+    a[href],
+    [role="button"],
+    [role="tab"],
+    input,
+    textarea,
+    select
+  ):focus-visible {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  thead {
+    border-bottom: 1px solid var(--ui-border);
+  }
+
+  tbody > tr + tr {
+    border-top: 1px solid var(--ui-divider);
+  }
+}
+
+/* Primary fills carry the Quantumberg purple→pink gradient. These rules sit
+   outside Tailwind's cascade layers, so they win over the flat
+   background-color the bg-brand-* utilities set (the opaque gradient image
+   simply paints over it). Hover states swap in a slightly darker pair. */
+.bg-brand-600,
+.hover\:bg-brand-600:hover {
+  background-image: linear-gradient(105deg, #453d89, #c8499a);
+}
+.hover\:bg-brand-700:hover {
+  background-image: linear-gradient(105deg, #372f6e, #a83d82);
+}
+
+/* Dropdowns: the browser's own arrow sits flush against the border. Draw
+   our own chevron with room around it. Unlayered on purpose - it outranks
+   Tailwind's padding utilities (px-3 etc.), so every select gets the space
+   without touching each screen. */
+select:not([multiple]):not([size]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-inline-end: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2378716c' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1rem 1rem;
+  text-overflow: ellipsis;
+}
+[dir="rtl"] select:not([multiple]):not([size]) {
+  background-position: left 0.7rem center;
+}
+.dark select:not([multiple]):not([size]) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23a8a29e' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-sheet-in {
+  animation: sheet-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-in,
+  .animate-fade-in {
+    animation: none;
+  }
+}
+
+/* The audit pack and other report sheets print on A4. */
+@page {
+  size: A4;
+  margin: 14mm 12mm;
+}
+
+@media print {
+  aside,
+  header {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

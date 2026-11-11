@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+/**
+ * Extract English UI strings from t() and its translate()/translateUI() aliases into catalog.csv.
+ * Merges existing Arabic and Spanish from their locale files.
+ *
+ * Usage: node scripts/i18n-extract.mjs
+ */
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const root = path.join(__dirname, "..")
+const src = path.join(root, "src")
+const outCsv = path.join(root, "src/i18n/catalog.csv")
+const arPath = path.join(root, "src/i18n/locales/ar.json")
+const esPath = path.join(root, "src/i18n/locales/es.json")
+
+function walk(dir, files = []) {
+  for (const name of fs.readdirSync(dir)) {
+    const p = path.join(dir, name)
+    const st = fs.statSync(p)
+    if (st.isDirectory()) walk(p, files)
+    else if (/\.(tsx|ts)$/.test(name) && !name.endsWith(".d.ts")) files.push(p)
+  }
+  return files
+}
+
+function csvEscape(s) {
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+  return s
+}
+
+function placeholders(s) {
+  return [...new Set([...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]))].join(" ")
+}
+
+const existingAr = fs.existsSync(arPath)
+  ? JSON.parse(fs.readFileSync(arPath, "utf8"))
+  : {}
+const existingEs = fs.existsSync(esPath)
+  ? JSON.parse(fs.readFileSync(esPath, "utf8"))
+  : {}
+
+const keys = new Map()
+const tCall =
+  /\b(?:t|translate|translateUI)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g
+
+// tn(count, "{n} child", "{n} children"): both forms are keys
+const tnCall =
+  /\btn\([^,()]*(?:\([^()]*\))?[^,()]*,\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1\s*,\s*(["'`])((?:\\.|(?!\3)[^\\])*)\3/g
+
+function add(key, source) {
+  if (!key || !/[A-Za-z]/.test(key)) return
+  if (key.includes("${")) return
+  if (!keys.has(key)) keys.set(key, new Set())
+  keys.get(key).add(path.relative(src, source))
+}
+
+for (const file of walk(src)) {
+  const text = fs.readFileSync(file, "utf8")
+  tCall.lastIndex = 0
+  let m
+  while ((m = tCall.exec(text))) {
+    add(
+      m[2].replace(/\\n/g, "\n").replace(/\\'/g, "'").replace(/\\"/g, '"'),
+      file,
+    )
+  }
+  tnCall.lastIndex = 0
+  while ((m = tnCall.exec(text))) {
+    for (const k of [m[2], m[4]])
+      add(k.replace(/\\'/g, "'").replace(/\\"/g, '"'), file)
+  }
+}
+
+// Finish setup receives its labels and help text from this server endpoint.
+// Include those literals so new checklist copy appears in the catalog too.
+const checklistFile = path.join(root, "../kamra/onboarding.py")
+const serverCall = /\b_\(\s*(["'])((?:\\.|(?!\1)[^\\])*)\1\s*\)/g
+for (const match of fs.readFileSync(checklistFile, "utf8").matchAll(serverCall)) {
+  add(
+    match[2].replace(/\\n/g, "\n").replace(/\\'/g, "'").replace(/\\"/g, '"'),
+    checklistFile,
+  )
+}
+
+// These server defaults are displayed as menu categories, courses, stations and tags.
+const settingsFile = path.join(root, "../kamra/settings.py")
+const menuDefaults = /\bS\("menu_(?:categories|courses|prep_stations|allergen_tags)",\s*"[^"\n]*",\s*"textarea",\s*"((?:\\.|[^"\\])*)"/g
+for (const match of fs.readFileSync(settingsFile, "utf8").matchAll(menuDefaults)) {
+  for (const option of match[1].replace(/\\n/g, "\n").split("\n")) {
+    add(option.trim(), settingsFile)
+  }
+}
+
+// Menu labels, statuses and saved reports can call t(variable). Keep their
+// dictionary keys when rebuilding the catalog so a later import retains them.
+for (const key of new Set([...Object.keys(existingAr), ...Object.keys(existingEs)])) {
+  if (!keys.has(key)) keys.set(key, new Set())
+}
+
+const rows = [...keys.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+const lines = ["key,english,arabic,spanish,sources,placeholders,status"]
+for (const [key, sources] of rows) {
+  const ar = existingAr[key] ?? ""
+  const es = existingEs[key] ?? ""
+  lines.push(
+    [
+      csvEscape(key),
+      csvEscape(key),
+      csvEscape(ar),
+      csvEscape(es),
+      csvEscape([...sources].sort().join("; ")),
+      csvEscape(placeholders(key)),
+      ar && es ? "translated" : "needs_translation",
+    ].join(","),
+  )
+}
+
+fs.writeFileSync(outCsv, "\uFEFF" + lines.join("\n") + "\n", "utf8")
+console.log(`Wrote ${rows.length} keys → ${path.relative(root, outCsv)}`)

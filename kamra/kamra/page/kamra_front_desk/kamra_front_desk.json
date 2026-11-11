@@ -1,0 +1,45 @@
+{
+ "content": null,
+ "creation": "2026-10-30 10:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "icon": "hotel",
+ "idx": 0,
+ "modified": "2026-10-30 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "kamra-front-desk",
+ "owner": "Administrator",
+ "page_name": "kamra-front-desk",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Hotel Admin"
+  },
+  {
+   "role": "Front Desk"
+  },
+  {
+   "role": "Finance"
+  },
+  {
+   "role": "Night Auditor"
+  },
+  {
+   "role": "Revenue Manager"
+  },
+  {
+   "role": "Housekeeping Supervisor"
+  },
+  {
+   "role": "Housekeeping"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Front Desk"
+}

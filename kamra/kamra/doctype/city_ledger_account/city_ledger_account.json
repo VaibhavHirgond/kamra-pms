@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "creation": "2026-09-07 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "company",
+  "account_number",
+  "billing_address",
+  "column_break_a",
+  "credit_limit",
+  "use_default_credit_days",
+  "credit_days",
+  "balance",
+  "disabled",
+  "restricted",
+  "restricted_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Corporate Account",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "account_number",
+   "fieldtype": "Data",
+   "label": "Account Number",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "billing_address",
+   "fieldtype": "Small Text",
+   "label": "Billing Address",
+   "description": "Printed on statements and invoices raised on the account."
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "credit_limit",
+   "fieldtype": "Currency",
+   "label": "Credit Limit",
+   "default": "0"
+  },
+  {
+   "fieldname": "use_default_credit_days",
+   "fieldtype": "Check",
+   "label": "Use Property Default Credit Days",
+   "default": "1",
+   "description": "On: bills are due after the property's default payment terms (Settings, Finance). Off: Credit Days below applies as entered - 0 means due on the invoice date."
+  },
+  {
+   "fieldname": "credit_days",
+   "fieldtype": "Int",
+   "label": "Credit Days",
+   "default": "0",
+   "description": "Payment terms when 'Use property default' is off: days after the invoice date a bill is due (0 = due on the invoice date).",
+   "depends_on": "eval:!doc.use_default_credit_days"
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Currency",
+   "label": "Balance",
+   "read_only": 1,
+   "default": "0",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled",
+   "default": "0"
+  },
+  {
+   "fieldname": "restricted",
+   "fieldtype": "Check",
+   "label": "Restricted",
+   "default": "0",
+   "description": "No new bills on the account (checkout transfers follow credit control; invoices and transfers are refused). Payments still post."
+  },
+  {
+   "fieldname": "restricted_reason",
+   "fieldtype": "Data",
+   "label": "Restricted Reason",
+   "depends_on": "restricted"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-29 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "City Ledger Account",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "email": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "Night Auditor"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "autoname": "hash"
+}

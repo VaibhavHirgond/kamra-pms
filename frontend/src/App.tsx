@@ -1,0 +1,409 @@
+import { lazy, Suspense, useEffect } from "react"
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom"
+import AppShell, { type ShellContext } from "./AppShell"
+const Login = lazy(() => import("./screens/Login"))
+import { useAuth } from "./lib/auth"
+import { visibleApps } from "./lib/apps"
+import { t, useT, t as translate, useUILanguage } from "./lib/i18n"
+import { toFullPath } from "./lib/routing"
+import { syncLang } from "./lib/dir"
+const Billing = lazy(() => import("./screens/Billing"))
+const EndOfDay = lazy(() => import("./screens/EndOfDay"))
+const EndOfDayWizard = lazy(() => import("./screens/EndOfDayWizard"))
+const AuditPack = lazy(() => import("./screens/AuditPack"))
+const PublicBooking = lazy(() => import("./screens/PublicBooking"))
+const PublicListing = lazy(() => import("./screens/PublicListing"))
+const PublicCheckin = lazy(() => import("./screens/PublicCheckin"))
+const FolioView = lazy(() => import("./screens/FolioView"))
+const GuestJourney = lazy(() => import("./screens/GuestJourney"))
+const HkApp = lazy(() => import("./screens/HkApp"))
+const Guests = lazy(() => import("./screens/Guests"))
+const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
+const GroupQuotation = lazy(() => import("./screens/GroupQuotation"))
+const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
+const AllowanceVoucher = lazy(() => import("./screens/AllowanceVoucher"))
+const TripConfirmation = lazy(() => import("./screens/TripConfirmation"))
+const Setup = lazy(() => import("./screens/Setup"))
+const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
+const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
+const Rooms = lazy(() => import("./screens/Rooms"))
+const Settings = lazy(() => import("./screens/settings/SettingsHub"))
+const FinishSetup = lazy(() => import("./screens/FinishSetup"))
+const SystemHealth = lazy(() => import("./screens/SystemHealth"))
+const BookingEngine = lazy(() => import("./screens/BookingEngine"))
+const Developers = lazy(() => import("./screens/Developers"))
+const Banquet = lazy(() => import("./screens/Banquet"))
+const BanquetDiary = lazy(() => import("./screens/BanquetDiary"))
+const BanquetMonth = lazy(() => import("./screens/BanquetMonth"))
+const BanquetRegisters = lazy(() => import("./screens/BanquetRegisters"))
+const BanquetCatalogue = lazy(() => import("./screens/BanquetCatalogue"))
+const BanquetFunction = lazy(() => import("./screens/BanquetFunction"))
+const BanquetDocument = lazy(() => import("./screens/BanquetDocument"))
+const Agents = lazy(() => import("./screens/Agents"))
+const Activity = lazy(() => import("./screens/Activity"))
+const AppLauncher = lazy(() => import("./screens/AppLauncher"))
+const Marketplace = lazy(() => import("./screens/Marketplace"))
+const Reports = lazy(() => import("./screens/Reports"))
+const ReportsHub = lazy(() => import("./screens/ReportsHub"))
+const InHouse = lazy(() => import("./screens/InHouse"))
+const RateCalendar = lazy(() => import("./screens/RateCalendar"))
+const RevenueReports = lazy(() => import("./screens/RevenueReports"))
+const OpsSLA = lazy(() => import("./screens/OpsSLA"))
+const Dashboard = lazy(() => import("./screens/Dashboard"))
+const Owner = lazy(() => import("./screens/Owner"))
+const CRS = lazy(() => import("./screens/CRS"))
+const POS = lazy(() => import("./screens/POS"))
+const Kitchen = lazy(() => import("./screens/Kitchen"))
+const PosDashboard = lazy(() => import("./screens/PosDashboard"))
+const Inventory = lazy(() => import("./screens/Inventory"))
+const AccountingExport = lazy(() => import("./screens/AccountingExport"))
+const Payables = lazy(() => import("./screens/Payables"))
+const CashForecast = lazy(() => import("./screens/CashForecast"))
+const ManagementBooks = lazy(() => import("./screens/ManagementBooks"))
+const VoidAllowanceReport = lazy(() => import("./screens/VoidAllowanceReport"))
+const AllowanceApprovals = lazy(() => import("./screens/AllowanceApprovals"))
+const TapeChart = lazy(() => import("./screens/TapeChart"))
+const Tickets = lazy(() => import("./screens/Tickets"))
+const Laundry = lazy(() => import("./screens/Laundry"))
+const MenuItems = lazy(() => import("./screens/MenuItems"))
+const RoomsSetup = lazy(() => import("./screens/RoomsSetup"))
+const Groups = lazy(() => import("./screens/Groups"))
+const KitchenPrinters = lazy(() => import("./screens/KitchenPrinters"))
+const Today = lazy(() => import("./screens/Today"))
+const ConfiguredScreen = lazy(() => import("./screens/ConfiguredScreen"))
+const CalendarView = lazy(() =>
+  import("./components/CalendarView").then((m) => ({ default: m.CalendarView })),
+)
+const WhatsAppChat = lazy(() => import("./screens/WhatsAppChat"))
+const CashierTill = lazy(() => import("./screens/CashierTill"))
+const CashierSessions = lazy(() => import("./screens/CashierSessions"))
+const CashierBoard = lazy(() => import("./screens/CashierBoard"))
+const PettyCash = lazy(() => import("./screens/PettyCash"))
+const CashierShiftReport = lazy(() => import("./screens/CashierShiftReport"))
+const Ledgers = lazy(() => import("./screens/Ledgers"))
+const Receivables = lazy(() => import("./screens/Receivables"))
+const FolioHistory = lazy(() => import("./screens/FolioHistory"))
+const CurrencyDesk = lazy(() => import("./screens/CurrencyDesk"))
+import ConnectionBanner from "./components/ConnectionBanner"
+import ErrorBoundary from "./components/ErrorBoundary"
+
+
+function Splash() {
+  const { t } = useT()
+  return <p className="py-20 text-center text-sm text-zinc-400">{t("Loading…")}</p>
+}
+
+/** Gate for the app shell: redirects to /login (remembering where you were)
+ *  whenever there's no session, so the URL always matches the auth state. */
+function RequireAuth() {
+  const { status } = useAuth()
+  const location = useLocation()
+  if (status === "loading") return <Splash />
+  if (status === "anon")
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname + location.search }}
+      />
+    )
+  return <Outlet />
+}
+
+/** Roles the Today board's API accepts (kamra front_desk_today). Anyone else
+ *  would land on a permission error, so they start in their own app instead. */
+const TODAY_ROLES = [
+  "Front Desk", "Finance", "Night Auditor", "Revenue Manager", "Kamra Agent",
+  "Hotel Admin", "System Manager", "Administrator",
+]
+
+function Home() {
+  const { roles } = useAuth()
+  if (roles.some((r) => TODAY_ROLES.includes(r))) return <Today />
+  const first = visibleApps(roles)
+    .flatMap((a) => a.items)
+    .find((i) => i.to && i.to !== "/" && (!i.roles || i.roles.some((r) => roles.includes(r))))
+  return first?.to ? <Navigate to={first.to} replace /> : <Today />
+}
+
+/** The /login route. Already signed in → bounce to where you came from.
+ *  On success, a full-page nav re-boots with the authenticated session's CSRF
+ *  token (login rotates it); dev soft-navigates. */
+function LoginPage() {
+  const { status, refresh } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const from = (location.state as { from?: string } | null)?.from || "/"
+  if (status === "loading") return <Splash />
+  if (status === "authed") return <Navigate to={from} replace />
+  return (
+    <Login
+      onSuccess={async () => {
+        if (import.meta.env.PROD) {
+          window.location.assign(toFullPath(from))
+        } else {
+          await refresh()
+          navigate(from, { replace: true })
+        }
+      }}
+    />
+  )
+}
+
+function CalendarScreen() {
+  const { refreshKey, canBook, openBooking } = useOutletContext<ShellContext>()
+  return (
+    <CalendarView
+      refreshKey={refreshKey}
+      onPick={
+        canBook ? (room_type, date) => openBooking({ room_type, date }) : undefined
+      }
+    />
+  )
+}
+
+export default function App() {
+  useUILanguage()
+  // guest pages and the desk keep separate languages; re-apply on crossing
+  const { pathname } = useLocation()
+  useEffect(() => syncLang(), [pathname])
+  return (
+    <ErrorBoundary>
+      <ConnectionBanner />
+      <Suspense
+        fallback={
+          <div className="p-10 text-center text-sm text-zinc-400">{translate("Loading…")}</div>
+        }
+      >
+      <Routes>
+        {/* public booking engine - no login; stay state lives in the URL
+            (/book/2026-07-10/2026-07-12/2/0) so links are shareable and
+            crawlable */}
+        <Route path="book" element={<PublicBooking />} />
+        <Route
+          path="book/:checkin/:checkout?/:adults?/:children?"
+          element={<PublicBooking />}
+        />
+        <Route path="stay/:slug" element={<PublicListing />} />
+        <Route
+          path="stay/:slug/:checkin/:checkout?/:adults?/:children?"
+          element={<PublicListing />}
+        />
+        {/* pre-arrival self check-in, tokenized per reservation */}
+        <Route path="checkin/:token" element={<PublicCheckin />} />
+        {/* housekeeping phone app - share the /hk URL with the HK team */}
+        <Route path="hk" element={<HkApp />} />
+        {/* dedicated login route so signing out changes the URL */}
+        <Route path="login" element={<LoginPage />} />
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+          <Route index element={<Home />} />
+          <Route path="apps" element={<AppLauncher />} />
+          <Route path="marketplace" element={<Marketplace />} />
+          <Route path="agents" element={<Agents />} />
+          <Route path="activity" element={<Activity />} />
+          <Route path="assistant" element={<Agents />} />
+          <Route path="calendar" element={<CalendarScreen />} />
+          <Route path="tape" element={<TapeChart />} />
+          <Route
+            path="reservations"
+            element={<ConfiguredScreen config="reservationsConfig" />}
+          />
+          <Route path="grc/:name" element={<RegistrationCard />} />
+          <Route path="group-quote/:name" element={<GroupQuotation />} />
+          <Route path="cancelled/:name" element={<CancellationLetter />} />
+          <Route path="trip/:name" element={<TripConfirmation />} />
+          <Route path="guests" element={<Guests />} />
+          <Route path="guests/:name" element={<GuestJourney />} />
+          <Route path="rooms" element={<RoomsSetup />} />
+          <Route
+            path="floors"
+            element={<ConfiguredScreen config="floorsConfig" />}
+          />
+          <Route
+            path="room-types"
+            element={<ConfiguredScreen config="roomTypesConfig" />}
+          />
+          <Route
+            path="room-blocks"
+            element={<ConfiguredScreen config="roomBlocksConfig" />}
+          />
+          <Route
+            path="rate-plans"
+            element={<ConfiguredScreen config="ratePlansConfig" />}
+          />
+          <Route
+            path="guardrails"
+            element={<ConfiguredScreen config="guardrailsConfig" />}
+          />
+          <Route
+            path="seasons"
+            element={<ConfiguredScreen config="seasonsConfig" />}
+          />
+          <Route
+            path="packages"
+            element={<ConfiguredScreen config="holidayPackagesConfig" />}
+          />
+          <Route
+            path="long-stay"
+            element={<ConfiguredScreen config="longStayConfig" />}
+          />
+          <Route
+            path="vouchers"
+            element={<ConfiguredScreen config="vouchersConfig" />}
+          />
+          <Route
+            path="meal-plans"
+            element={<ConfiguredScreen config="mealPlansConfig" />}
+          />
+          <Route
+            path="experiences"
+            element={<ConfiguredScreen config="experiencesConfig" />}
+          />
+          <Route path="billing" element={<Billing />} />
+          <Route path="end-of-day" element={<EndOfDay />} />
+          <Route path="end-of-day/pack/:audit" element={<AuditPack />} />
+          <Route path="end-of-day/:property" element={<EndOfDayWizard />} />
+          <Route path="night-audit" element={<Navigate to="/end-of-day" replace />} />
+          <Route path="billing/:name" element={<FolioView />} />
+          <Route path="cashier" element={<CashierTill />} />
+          <Route path="cashier/sessions" element={<CashierSessions />} />
+          <Route path="finish-setup" element={<FinishSetup />} />
+          <Route path="cashier/board" element={<CashierBoard />} />
+          <Route path="cashier/petty-cash" element={<PettyCash />} />
+          <Route path="cashier/shift-report" element={<CashierShiftReport />} />
+          <Route path="cashier/fx" element={<CurrencyDesk />} />
+          <Route path="ledgers" element={<Ledgers />} />
+          <Route path="receivables" element={<Receivables />} />
+          <Route path="receivables/:account" element={<Receivables />} />
+          <Route path="folio-history" element={<FolioHistory />} />
+          <Route
+            path="companies"
+            element={<ConfiguredScreen config="companiesConfig" />}
+          />
+          <Route
+            path="travel-agents"
+            element={<ConfiguredScreen config="travelAgentsConfig" />}
+          />
+          <Route
+            path="events"
+            element={<ConfiguredScreen config="venueBookingsConfig" />}
+          />
+          <Route
+            path="venues"
+            element={<ConfiguredScreen config="venuesConfig" />}
+          />
+          {/* The old venue calendar created bare Venue Bookings with no
+              rental line, no follow-up and no owner - a function that
+              quoted zero. The diary is its superset, and the only door. */}
+          <Route
+            path="venue-calendar"
+            element={<Navigate to="/banquet-diary" replace />}
+          />
+          {/* banquets: the function business, enquiry → event order → bill */}
+          <Route path="banquet" element={<Banquet />} />
+          <Route path="banquet-diary" element={<BanquetDiary />} />
+          <Route path="banquet-month" element={<BanquetMonth />} />
+          <Route path="banquet-registers" element={<BanquetRegisters />} />
+          <Route path="banquet-catalogue" element={<BanquetCatalogue />} />
+          <Route path="banquet/:name" element={<BanquetFunction />} />
+          <Route path="banquet/:name/:kind" element={<BanquetDocument />} />
+          <Route path="groups" element={<Groups />} />
+          <Route
+            path="lost-found"
+            element={<ConfiguredScreen config="lostFoundConfig" />}
+          />
+          <Route
+            path="shifts"
+            element={<ConfiguredScreen config="shiftsConfig" />}
+          />
+          <Route path="setup" element={<Setup />} />
+          <Route path="go-live" element={<GoLiveImport />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="settings/:section" element={<Settings />} />
+          <Route path="health" element={<SystemHealth />} />
+          <Route path="booking-settings" element={<BookingEngine />} />
+          <Route path="booking-settings/:section" element={<BookingEngine />} />
+          <Route path="developers" element={<Developers />} />
+          <Route path="reports" element={<ReportsHub />} />
+          <Route path="reports/flash" element={<Reports initialTab="flash" />} />
+          <Route path="reports/custom" element={<Reports />} />
+          <Route path="reports/packs" element={<Reports key="packs" initialTab="packs" />} />
+          <Route path="in-house" element={<InHouse />} />
+          <Route path="arrivals" element={<Navigate to="/in-house?tab=arrivals" replace />} />
+          <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />
+          <Route path="voids-allowances" element={<VoidAllowanceReport />} />
+          <Route path="allowances" element={<AllowanceApprovals />} />
+          <Route path="allowance-voucher/:name" element={<AllowanceVoucher />} />
+          <Route path="rate-calendar" element={<RateCalendar />} />
+          <Route path="revenue-reports" element={<RevenueReports />} />
+          <Route path="ops-sla" element={<OpsSLA />} />
+          <Route path="whatsapp" element={<WhatsAppChat />} />
+          <Route
+            path="channels"
+            element={<ConfiguredScreen config="channelConnectionsConfig" />}
+          />
+          <Route
+            path="channel-manager"
+            element={<ConfiguredScreen config="channelManagerConfig" />}
+          />
+          <Route
+            path="ota-mappings"
+            element={<ConfiguredScreen config="channelRoomMappingsConfig" />}
+          />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="owner" element={<Owner />} />
+          <Route path="crs" element={<CRS />} />
+          <Route path="pos" element={<POS />} />
+          <Route path="pos-dashboard" element={<PosDashboard />} />
+          <Route path="kitchen" element={<Kitchen />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="menu" element={<Navigate to="/menu-items" replace />} />
+          <Route path="menu-items" element={<MenuItems />} />
+          <Route path="ingredients" element={<ConfiguredScreen config="ingredientsConfig" />} />
+          <Route path="printers" element={<KitchenPrinters />} />
+          <Route path="outlets" element={<ConfiguredScreen config="outletsConfig" />} />
+          <Route path="accounting-export" element={<AccountingExport />} />
+          <Route path="payables" element={<Payables />} />
+          <Route path="cash-forecast" element={<CashForecast />} />
+          <Route path="profit-and-loss" element={<ManagementBooks view="pnl" />} />
+          <Route path="balance-sheet" element={<ManagementBooks view="balance" />} />
+          <Route
+            path="reason-codes"
+            element={<ConfiguredScreen config="reasonCodesConfig" />}
+          />
+          <Route
+            path="transaction-codes"
+            element={<ConfiguredScreen config="transactionCodesConfig" />}
+          />
+          <Route path="tickets" element={<Tickets />} />
+          <Route path="laundry" element={<Laundry />} />
+          <Route path="housekeeping-board" element={<HousekeepingBoard />} />
+          <Route path="room-board" element={<Rooms />} />
+          <Route
+            path="housekeeping"
+            element={<ConfiguredScreen config="housekeepingConfig" />}
+          />
+          <Route
+            path="*"
+            element={
+              <p className="py-10 text-center text-sm text-zinc-400">
+                {t("Page not found.")}
+              </p>
+            }
+          />
+          </Route>
+        </Route>
+      </Routes>
+      </Suspense>
+    </ErrorBoundary>
+  )
+}
