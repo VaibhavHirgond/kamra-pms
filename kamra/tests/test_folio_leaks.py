@@ -25,6 +25,7 @@ from kamra.tests.audit_fixtures import (
 	d,
 	guest_folio,
 	make_guest,
+	make_preexisting_in_house,
 	make_property,
 	make_reservation,
 	make_room,
@@ -71,9 +72,9 @@ class FolioLeaksTestCase(AuditTestCase):
 		self.company = corp.name
 
 	def corporate_stay(self, room=None):
-		return make_reservation(PROP_A, self.rt, d(-1), TODAY,
-		                        status="Checked In", room=room or self.room,
-		                        booking_type="Corporate", company=self.company)
+		return make_preexisting_in_house(PROP_A, self.rt, d(-1), TODAY,
+		                                 room=room or self.room,
+		                                 booking_type="Corporate", company=self.company)
 
 	# 1. liquor billed to the company at check-out -------------------------
 
@@ -163,8 +164,8 @@ class FolioLeaksTestCase(AuditTestCase):
 
 	def test_room_order_cannot_close_unbilled_after_the_guest_leaves(self):
 		outlet, dosa, _gin = self.outlet()
-		res = make_reservation(PROP_A, self.rt, d(-1), TODAY,
-		                       status="Checked In", room=self.room)
+		res = make_preexisting_in_house(PROP_A, self.rt, d(-1), TODAY,
+		                                room=self.room)
 		o = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}],
 		                     room=self.room)
 		self.assertEqual(frappe.db.get_value("POS Order", o["order"],
@@ -192,8 +193,8 @@ class FolioLeaksTestCase(AuditTestCase):
 
 	def test_in_house_rooms_lists_only_occupied_rooms(self):
 		guest = make_guest("UT Asha")
-		make_reservation(PROP_A, self.rt, d(-1), d(1), status="Checked In",
-		                 room=self.room, guest=guest)
+		make_preexisting_in_house(PROP_A, self.rt, d(-1), d(1),
+		                          room=self.room, guest=guest)
 		rows = pos.in_house_rooms(PROP_A)
 		self.assertEqual([(r["room"], r["room_number"]) for r in rows],
 		                 [(self.room, "101")])
@@ -235,8 +236,8 @@ class FolioLeaksTestCase(AuditTestCase):
 	# 3. folio closed with a balance ---------------------------------------
 
 	def test_close_folio_needs_a_settled_bill(self):
-		res = make_reservation(PROP_A, self.rt, d(-1), d(1),
-		                       status="Checked In", room=self.room)
+		res = make_preexisting_in_house(PROP_A, self.rt, d(-1), d(1),
+		                                room=self.room)
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
 		with self.assertRaisesRegex(frappe.ValidationError, "still owed"):
@@ -256,8 +257,8 @@ class FolioLeaksTestCase(AuditTestCase):
 		self.assertTrue(folio_mod.close_folio(company).startswith("INV-"))
 
 	def test_checkout_counts_a_closed_folio_with_a_balance(self):
-		res = make_reservation(PROP_A, self.rt, d(-1), TODAY,
-		                       status="Checked In", room=self.room)
+		res = make_preexisting_in_house(PROP_A, self.rt, d(-1), TODAY,
+		                                room=self.room)
 		folio_mod.post_remaining_nights(res)
 		folio = guest_folio(res.name)
 		owed = _balance(folio)
@@ -300,8 +301,8 @@ class FolioLeaksTestCase(AuditTestCase):
 		self.assertAlmostEqual(_net(folio, "Guest"), 0, places=2)
 
 	def test_advance_taken_in_house_pays_the_stay_at_once(self):
-		res = make_reservation(PROP_A, self.rt, d(-1), d(1),
-		                       status="Checked In", room=self.room)
+		res = make_preexisting_in_house(PROP_A, self.rt, d(-1), d(1),
+		                                room=self.room)
 		folio = guest_folio(res.name)
 		api.add_folio_payment(folio, "Cash", 800, kind="Advance")
 		self.assertAlmostEqual(_net(folio, "Deposit"), 0, places=2)

@@ -24,6 +24,7 @@ from kamra.tests.audit_fixtures import (
 	d,
 	ensure_user,
 	guest_folio,
+	make_preexisting_in_house,
 	make_property,
 	make_reservation,
 	make_room,
@@ -101,8 +102,8 @@ class CreditControlTestCase(AuditTestCase):
 
 	def bill(self, amount, room=None):
 		"""A guest folio of `amount` moved to the company's city ledger."""
-		res = make_reservation(PROP_A, self.rt, d(-1), d(1),
-		                       status="Checked In", room=room or self.room)
+		res = make_preexisting_in_house(PROP_A, self.rt, d(-1), d(1),
+		                                room=room or self.room)
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Misc", "UT bill", amount, gst_rate=0)
 		return ledger.transfer_to_city_ledger(folio, self.company,

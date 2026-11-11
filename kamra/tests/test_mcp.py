@@ -392,6 +392,23 @@ class TestRemoteMCP(IntegrationTestCase):
 		user.api_key = frappe.generate_hash(length=15)
 		secret = frappe.generate_hash(length=15)
 		user.api_secret = secret
+		# Guard: User.on_update (fired by save) re-runs create_contact on the
+		# auto-created Contact. create_contact locates the Contact via
+		# get_contact_name(email) (searches Contact Email child rows), not via
+		# Contact.user. If that Contact holds more than one primary email,
+		# Contact.validate() throws "Only one Email ID can be set as primary."
+		# Clean it up before user.save() so create_contact's UPDATE branch
+		# saves a valid Contact.
+		from frappe.contacts.doctype.contact.contact import get_contact_name
+
+		contact_name = get_contact_name(email)
+		if contact_name:
+			contact = frappe.get_doc("Contact", contact_name)
+			primaries = [e for e in contact.email_ids if e.is_primary]
+			for extra in primaries[1:]:
+				extra.is_primary = 0
+			if len(primaries) > 1:
+				contact.save(ignore_permissions=True)
 		user.save(ignore_permissions=True)
 		if restrict and not frappe.db.exists(
 				"User Permission", {"user": email, "allow": "Property"}):
