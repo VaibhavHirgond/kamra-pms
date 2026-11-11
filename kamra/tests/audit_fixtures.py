@@ -147,6 +147,32 @@ def make_reservation(prop: str, room_type: str, check_in: str, check_out: str,
 	return doc
 
 
+def make_preexisting_in_house(property: str, room_type: str, check_in: str,
+                              check_out: str, room: str | None = None,
+                              **fields):
+	"""A stay checked in before the audit date under test.
+
+	Temporarily uses the stay's arrival date as the open business date so
+	check-in setup does not also simulate the separate late-arrival catch-up
+	(post_closed_nights would otherwise post historical room nights that the
+	test did not ask for).
+	"""
+	business_date = frappe.db.get_value("Property", property, "business_date")
+	if business_date and str(check_in) < str(business_date):
+		frappe.db.set_value("Property", property, "business_date", check_in,
+		                    update_modified=False)
+		try:
+			return make_reservation(
+				property, room_type, check_in, check_out,
+				status="Checked In", room=room, **fields)
+		finally:
+			frappe.db.set_value("Property", property, "business_date",
+			                    business_date, update_modified=False)
+	return make_reservation(
+		property, room_type, check_in, check_out, status="Checked In",
+		room=room, **fields)
+
+
 def guest_folio(reservation: str) -> str | None:
 	return frappe.db.get_value("Folio", {"reservation": reservation,
 	                                     "folio_type": "Guest"})

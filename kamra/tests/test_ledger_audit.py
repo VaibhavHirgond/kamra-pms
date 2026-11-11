@@ -27,6 +27,7 @@ from kamra.tests.audit_fixtures import (
 	d,
 	ensure_user,
 	guest_folio,
+	make_preexisting_in_house,
 	make_property,
 	make_reservation,
 	make_room,
@@ -45,8 +46,8 @@ class LedgerAuditTestCase(AuditTestCase):
 		self.rt = make_room_type(PROP_A, "STD", base_price=1000)
 		self.room = make_room(PROP_A, self.rt, "101")
 		self.room2 = make_room(PROP_A, self.rt, "102")
-		self.res = make_reservation(PROP_A, self.rt, d(-1), d(2),
-		                            status="Checked In", room=self.room)
+		self.res = make_preexisting_in_house(PROP_A, self.rt, d(-1), d(2),
+		                                     room=self.room)
 		self.folio = guest_folio(self.res.name)
 		if frappe.db.exists("Corporate Account", COMPANY):
 			frappe.db.set_value("Corporate Account", COMPANY, "credit_allowed", 1)

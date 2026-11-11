@@ -25,6 +25,7 @@ from kamra.tests.audit_fixtures import (
 	AuditTestCase,
 	charges,
 	d,
+	make_preexisting_in_house,
 	make_property,
 	make_reservation,
 	make_room,
@@ -113,8 +114,8 @@ class NightAuditScheduleTestCase(AuditTestCase):
 
 	# 1 - closes once after 03:00 local and not before
 	def test_default_closes_once_after_0300(self):
-		res = make_reservation(PROP_A, self.rt, d(-2), d(2),
-		                       status="Checked In", room=self.room)
+		res = make_preexisting_in_house(
+			PROP_A, self.rt, d(-2), d(2), room=self.room)
 		self.tick("02:45")
 		self.assertEqual(self.closed(), [])
 		self.assertEqual(self.logs(), [])
@@ -184,8 +185,8 @@ class NightAuditScheduleTestCase(AuditTestCase):
 
 	# 5 - three days behind: one day per tick, never past today
 	def test_catch_up_one_day_per_tick(self):
-		res = make_reservation(PROP_A, self.rt, d(-5), d(2),
-		                       status="Checked In", room=self.room)
+		res = make_preexisting_in_house(
+			PROP_A, self.rt, d(-5), d(2), room=self.room)
 		frappe.db.set_value("Property", PROP_A, "business_date", d(-3))
 		self.tick("03:00")
 		self.assertEqual(self.bd(), d(-2))
