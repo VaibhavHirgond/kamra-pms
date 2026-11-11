@@ -2565,51 +2565,60 @@ def t36():
 @check("stay ledger: advance/deposit kinds, guarded refunds, actual times on GRC")
 def t37():
 	from kamra import api
-
-	lroom2 = frappe.db.exists("Room", {"property": P, "room_number": "E105"})
-	if not lroom2:
-		lroom2 = frappe.get_doc({
-			"doctype": "Room", "property": P, "room_number": "E105",
-			"room_type": RT,
-		}).insert(ignore_permissions=True).name
-	else:
-		frappe.db.set_value("Room", lroom2, "room_type", RT)
-	g = _guest("Eval Ledger", "+91 70000 00037")
-	res = _res(g, nowdate(), add_days(nowdate(), 1), lroom2)
-	res.status = "Checked In"
-	res.save(ignore_permissions=True)
-	folio = frappe.db.get_value(
-		"Folio", {"reservation": res.name, "folio_type": "Guest"})
-
-	# advance and a refundable deposit land as labelled ledger rows
-	api.add_folio_payment(folio, "UPI", 2000, kind="Advance")
-	api.add_folio_payment(folio, "Cash", 1000, kind="Security Deposit")
+	# pin the business date to today: a prior night-audit run (t18) may have
+	# rolled it forward, which would post tonight's room charge at check-in
+	# and leave the guest with an outstanding balance that blocks refunds.
+	# the original value is restored below so later tests inherit the date
+	# they had before t37 and see no leakage from this test.
+	saved_bd = frappe.db.get_value("Property", P, "business_date")
+	frappe.db.set_value("Property", P, "business_date", nowdate())
 	try:
-		api.add_folio_payment(folio, "Cash", 100, kind="Bribe")
-		raise AssertionError("junk payment kind accepted")
-	except frappe.exceptions.ValidationError:
-		pass
+		lroom2 = frappe.db.exists("Room", {"property": P, "room_number": "E105"})
+		if not lroom2:
+			lroom2 = frappe.get_doc({
+				"doctype": "Room", "property": P, "room_number": "E105",
+				"room_type": RT,
+			}).insert(ignore_permissions=True).name
+		else:
+			frappe.db.set_value("Room", lroom2, "room_type", RT)
+		g = _guest("Eval Ledger", "+91 70000 00037")
+		res = _res(g, nowdate(), add_days(nowdate(), 1), lroom2)
+		res.status = "Checked In"
+		res.save(ignore_permissions=True)
+		folio = frappe.db.get_value(
+			"Folio", {"reservation": res.name, "folio_type": "Guest"})
 
-	# refunds: reason mandatory, can't exceed what was collected
-	try:
-		api.refund_folio_payment(folio, 5000, "Cash", "too much")
-		raise AssertionError("over-refund accepted")
-	except frappe.exceptions.ValidationError:
-		pass
-	api.refund_folio_payment(folio, 1000, "Cash", "deposit returned")
-	fd = frappe.get_doc("Folio", folio)
-	kinds = {(p.payment_kind, float(p.amount)) for p in fd.payments}
-	assert ("Advance", 2000.0) in kinds and ("Security Deposit", 1000.0) in kinds
-	assert ("Refund", -1000.0) in kinds, kinds
-	assert float(fd.payments_total) == 2000.0, fd.payments_total  # 2000+1000-1000
+		# advance and a refundable deposit land as labelled ledger rows
+		api.add_folio_payment(folio, "UPI", 2000, kind="Advance")
+		api.add_folio_payment(folio, "Cash", 1000, kind="Security Deposit")
+		try:
+			api.add_folio_payment(folio, "Cash", 100, kind="Bribe")
+			raise AssertionError("junk payment kind accepted")
+		except frappe.exceptions.ValidationError:
+			pass
 
-	# actual times: corrected by the desk, visible on the GRC with money
-	api.set_actual_times(res.name, actual_check_in=f"{nowdate()} 07:15:00")
-	card = api.registration_card(res.name)
-	assert card["reservation"]["actual_check_in"].endswith("07:15:00")
-	assert card["money"]["folio"] == folio, card["money"]
-	assert card["money"]["advance"] == 2000.0, card["money"]
-	assert card["money"]["refunded"] == 1000.0, card["money"]
+		# refunds: reason mandatory, can't exceed what was collected
+		try:
+			api.refund_folio_payment(folio, 5000, "Cash", "too much")
+			raise AssertionError("over-refund accepted")
+		except frappe.exceptions.ValidationError:
+			pass
+		api.refund_folio_payment(folio, 1000, "Cash", "deposit returned")
+		fd = frappe.get_doc("Folio", folio)
+		kinds = {(p.payment_kind, float(p.amount)) for p in fd.payments}
+		assert ("Advance", 2000.0) in kinds and ("Security Deposit", 1000.0) in kinds
+		assert ("Refund", -1000.0) in kinds, kinds
+		assert float(fd.payments_total) == 2000.0, fd.payments_total  # 2000+1000-1000
+
+		# actual times: corrected by the desk, visible on the GRC with money
+		api.set_actual_times(res.name, actual_check_in=f"{nowdate()} 07:15:00")
+		card = api.registration_card(res.name)
+		assert card["reservation"]["actual_check_in"].endswith("07:15:00")
+		assert card["money"]["folio"] == folio, card["money"]
+		assert card["money"]["advance"] == 2000.0, card["money"]
+		assert card["money"]["refunded"] == 1000.0, card["money"]
+	finally:
+		frappe.db.set_value("Property", P, "business_date", saved_bd)
 
 
 @check("Indonesia pack: PBJT flat tax, NPWP labels, Rupiah locale")
@@ -7430,27 +7439,38 @@ def t304():
 @check("a departure's balance counts the nights night audit has not posted, as check-out does, and keeps nothing")
 def t305():
 	from kamra import api
-	rt, (room, _r2) = _t300_rooms("T3D")
-	res = _t300_in_house(rt, room, "Eval Owes", "+91 70000 30051")
-	folio = frappe.db.get_value("Folio", {"reservation": res.name,
-	                                      "folio_type": "Guest"})
-	charges_before = frappe.db.count("Folio Charge", {"parent": folio})
-	posted = float(frappe.db.get_value("Folio", folio, "balance") or 0)
-	log_before = list(getattr(frappe.local, "_realtime_log", []) or [])
-	due = api._stay_balance(res.name)["due"]
-	assert due > posted, (due, posted)
-	# the projection is a read: no charge, balance or realtime ping is kept
-	assert float(frappe.db.get_value("Folio", folio, "balance") or 0) == posted
-	assert frappe.db.count("Folio Charge", {"parent": folio}) == charges_before
-	assert list(getattr(frappe.local, "_realtime_log", []) or []) == log_before
-	snap = api.front_desk_snapshot(P)
-	dep = [r for r in snap["departures"] if r["name"] == res.name]
-	assert dep and dep[0]["balance_due"] == due, dep
+	# pin the business date to yesterday so the night before departure is not
+	# yet closed/posted by check-in; the balance projection (check-out
+	# semantics) must count it as an unposted night. A prior night-audit run
+	# may have rolled the business date forward, which would pre-post it and
+	# make due == posted instead of due > posted. the original value is
+	# restored below so later tests see no leakage from this test.
+	saved_bd = frappe.db.get_value("Property", P, "business_date")
+	frappe.db.set_value("Property", P, "business_date", add_days(nowdate(), -1))
 	try:
-		api.check_out(res.name)
-		raise AssertionError("check-out let an unpaid guest leave")
-	except frappe.ValidationError as e:
-		assert f"{due:,.2f}" in str(e), (due, str(e))
+		rt, (room, _r2) = _t300_rooms("T3D")
+		res = _t300_in_house(rt, room, "Eval Owes", "+91 70000 30051")
+		folio = frappe.db.get_value("Folio", {"reservation": res.name,
+		                                      "folio_type": "Guest"})
+		charges_before = frappe.db.count("Folio Charge", {"parent": folio})
+		posted = float(frappe.db.get_value("Folio", folio, "balance") or 0)
+		log_before = list(getattr(frappe.local, "_realtime_log", []) or [])
+		due = api._stay_balance(res.name)["due"]
+		assert due > posted, (due, posted)
+		# the projection is a read: no charge, balance or realtime ping is kept
+		assert float(frappe.db.get_value("Folio", folio, "balance") or 0) == posted
+		assert frappe.db.count("Folio Charge", {"parent": folio}) == charges_before
+		assert list(getattr(frappe.local, "_realtime_log", []) or []) == log_before
+		snap = api.front_desk_snapshot(P)
+		dep = [r for r in snap["departures"] if r["name"] == res.name]
+		assert dep and dep[0]["balance_due"] == due, dep
+		try:
+			api.check_out(res.name)
+			raise AssertionError("check-out let an unpaid guest leave")
+		except frappe.ValidationError as e:
+			assert f"{due:,.2f}" in str(e), (due, str(e))
+	finally:
+		frappe.db.set_value("Property", P, "business_date", saved_bd)
 
 
 # --- billing / cashier / end-of-day / reports fixes (t320-t328) ---------------

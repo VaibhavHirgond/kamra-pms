@@ -741,6 +741,12 @@ def post_closed_nights(reservation) -> list[str]:
 	cutoff = carried_forward_until(reservation.name)
 	if cutoff and cutoff > start:
 		start = cutoff
+	elif reservation.flags.get("carried_forward"):
+		# a go-live carry-forward: the old system already billed the nights
+		# before go-live (they arrive inside the opening balance). Do not
+		# re-post them here - checkout bills only Kamra's nights from go-live
+		# onward, starting at the current business date.
+		start = max(start, getdate(get_business_date(reservation.property)))
 	end = getdate(reservation.check_out_date)
 	if getattr(reservation, "is_day_use", 0) and end == start:
 		end = getdate(add_days(start, 1))
