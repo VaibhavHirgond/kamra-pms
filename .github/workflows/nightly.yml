@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: main
           fetch-depth: 50
 
       - name: Check for fresh commits and green CI
@@ -71,7 +71,7 @@ jobs:
           cat > apps.json <<EOF
           [
             {"url": "https://github.com/frappe/payments", "branch": "develop"},
-            {"url": "https://github.com/Kamra-PMS/kamra-pms", "branch": "develop"}
+            {"url": "https://github.com/VaibhavHirgond/kamra-pms", "branch": "main"}
           ]
           EOF
 
@@ -111,7 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: main
 
       - name: Move the nightly tag and prerelease
         env:

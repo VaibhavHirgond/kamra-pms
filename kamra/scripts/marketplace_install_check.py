@@ -81,16 +81,17 @@ def check_hooks() -> None:
 
 def check_desk_integration() -> None:
 	"""Kamra opens inside the standard Desk like Education / Healthcare:
-	a Workspace, a Workspace Sidebar and a Front Desk page that hosts the SPA."""
+	a Desktop Icon (app launcher), a Workspace Sidebar and a Front Desk
+	page that hosts the SPA."""
 	page = APP / "kamra" / "page" / "kamra_front_desk"
-	workspace = APP / "kamra" / "workspace" / "kamra" / "kamra.json"
-	sidebar = APP / "workspace_sidebar" / "kamra.json"
+	workspace = APP / "desktop_icon" / "kamra.json"
+	sidebar = APP / "workspace_sidebar" / "hotel.json"
 	if not (page / "kamra_front_desk.json").is_file() or not (page / "kamra_front_desk.js").is_file():
 		fail("desk page kamra_front_desk (json + js) missing")
 	if not workspace.is_file():
-		fail("workspace kamra/kamra/kamra.json missing")
+		fail("desktop_icon/kamra.json missing")
 	if not sidebar.is_file():
-		fail("workspace_sidebar/kamra.json missing")
+		fail("workspace_sidebar/hotel.json missing")
 	ok("desk workspace, sidebar and Front Desk page shipped")
 
 
@@ -138,7 +139,7 @@ def check_no_symlinks() -> None:
 	errors"). Editor and agent config folders have tripped it before."""
 	found: list[str] = []
 	for dirpath, dirnames, filenames in os.walk(ROOT):
-		dirnames[:] = [d for d in dirnames if d not in (".git", "node_modules")]
+		dirnames[:] = [d for d in dirnames if d not in (".git", "node_modules", ".venv-docs")]
 		for name in dirnames + filenames:
 			p = Path(dirpath) / name
 			if p.is_symlink():

@@ -2954,10 +2954,18 @@ def t48():
 		sent.append(payload) or (True, f"wamid.eval{len(sent)}"))
 	try:
 		# an existing confirmed stay whose guest has a phone
-		res_name = frappe.get_all(
+		res_names = frappe.get_all(
 			"Reservation", filters={"property": P,
 			                        "status": ("in", ["Confirmed", "Checked In"])},
-			pluck="name", limit=1)[0]
+			pluck="name", limit=1)
+		if res_names:
+			res_name = res_names[0]
+		else:
+			g = _guest("Eval WhatsApp", "+91 70000 00041")
+			res = _res(g, "2035-05-01", "2035-05-02", ROOM)
+			res.status = "Confirmed"
+			res.save(ignore_permissions=True)
+			res_name = res.name
 		res = frappe.get_doc("Reservation", res_name)
 		frappe.db.set_value("Guest", res.guest, "phone", "919812340048")
 		if not res.get("precheckin_token"):

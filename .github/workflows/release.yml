@@ -101,7 +101,7 @@ jobs:
           cat > apps.json <<EOF
           [
             {"url": "https://github.com/frappe/payments", "branch": "develop"},
-            {"url": "https://github.com/Kamra-PMS/kamra-pms", "branch": "${{ steps.tag.outputs.tag }}"}
+            {"url": "https://github.com/VaibhavHirgond/kamra-pms", "branch": "${{ steps.tag.outputs.tag }}"}
           ]
           EOF
 
