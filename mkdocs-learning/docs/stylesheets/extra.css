@@ -1,0 +1,67 @@
+:root {
+    --quantum-purple: #453D89;
+    --quantum-pink: #C8499A;
+    --quantum-gradient: linear-gradient(105deg, #453D89, #C8499A);
+}
+
+/* Header */
+.md-header {
+    background: var(--quantum-gradient) !important;
+}
+
+/* Navigation */
+.md-tabs {
+    background: var(--quantum-gradient) !important;
+}
+
+.md-header,
+.md-header__button,
+.md-header__title,
+.md-tabs__link {
+    color: #fff !important;
+}
+
+/* Active navigation */
+.md-tabs__link--active {
+    border-bottom: 2px solid #fff;
+    font-weight: 700;
+}
+
+/* Sidebar */
+.md-nav__link--active,
+.md-nav__link:hover {
+    color: var(--quantum-pink) !important;
+}
+
+/* Content links */
+.md-content a {
+    color: var(--quantum-pink);
+}
+
+/* Buttons */
+.md-button--primary {
+    background: var(--quantum-gradient) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px;
+}
+
+/* Tables */
+.md-typeset table:not([class]) th {
+    background: var(--quantum-purple);
+    color: #fff;
+}
+
+/* Light theme */
+[data-md-color-scheme="default"] {
+    --md-primary-fg-color: #453D89;
+    --md-accent-fg-color: #C8499A;
+    --md-typeset-a-color: #C8499A;
+}
+
+/* Dark theme */
+[data-md-color-scheme="slate"] {
+    --md-primary-fg-color: #453D89;
+    --md-accent-fg-color: #C8499A;
+    --md-typeset-a-color: #E58BC5;
+}

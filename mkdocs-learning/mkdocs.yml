@@ -1,0 +1,107 @@
+
+site_name: Quantumberg Documentation
+site_description: Complete documentation for Quantumberg Technologies products, operations, administration and development.
+site_author: Quantumberg Technologies
+
+docs_dir: docs
+
+theme:
+  name: material
+  language: en
+
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+  icon:
+    logo: material/book-open-page-variant
+
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: pink
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    - scheme: slate
+      primary: deep purple
+      accent: pink
+      toggle:
+        icon: material/white-balance-sunny
+        name: Switch to light mode
+
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+      title: On this page
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+
+  - User Guides:
+      - End User Guide: END_USER_GUIDE.md
+      - Administrator Guide: QUANTUMBERG_ADMIN_GUIDE.md
+      - Front Desk Guide: QUANTUMBERG_FRONT_DESK_GUIDE.md
+      - Housekeeping Guide: QUANTUMBERG_HOUSEKEEPING_GUIDE.md
+
+  - Operations:
+      - Operations Guide: QUANTUMBERG_OPERATIONS_GUIDE.md
+      - F&B POS Guide: QUANTUMBERG_FB_POS_GUIDE.md
+      - Banquets Guide: QUANTUMBERG_BANQUETS_GUIDE.md
+      - Banquet Enterprise Feature: banquet-enterprise-feature-epic.md
+      - Booking Engine Guide: QUANTUMBERG_BOOKING_ENGINE_GUIDE.md
+
+  - Finance:
+      - Finance Guide: QUANTUMBERG_FINANCE_GUIDE.md
+      - Revenue Guide: QUANTUMBERG_REVENUE_GUIDE.md
+
+  - Developer:
+      - AI and API: ai-and-api.md
+      - Self Hosting: self-hosting.md
+      - Email Setup: email-setup.md
+      - User Guide: user-guide.md
+      - Marketplace Listing: marketplace-listing.md
